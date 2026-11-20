@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://latex.giit.ch/sitemap.xml

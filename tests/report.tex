@@ -1,0 +1,27 @@
+\documentclass{report}
+\usepackage{amsmath,amsthm}
+\newtheorem{thm}{Theorem}[chapter]
+\title{A Report}\author{Me}
+\begin{document}
+\maketitle
+\tableofcontents
+\chapter{Intro}
+\section{First}
+\begin{thm}[Pythagoras]\label{t1} $a^2+b^2=c^2$. \end{thm}
+\begin{proof} Trivial. \end{proof}
+See Theorem~\ref{t1} on page~\pageref{t1}. \cite{knuth}
+\lipsum[1-6]
+\section{Second}
+\begin{enumerate}[label=(\alph*)]
+\item one \item two
+\end{enumerate}
+\begin{tabularx}{\textwidth}{|l|X|}\hline
+A & long text that should wrap inside the X column and keep going for a while to test wrapping \\ \hline
+\multicolumn{2}{|c|}{merged} \\ \hline
+\end{tabularx}
+\chapter{More}
+\lipsum[1-12]
+\begin{thebibliography}{9}
+\bibitem{knuth} D. Knuth, \emph{The TeXbook}, 1984.
+\end{thebibliography}
+\end{document}

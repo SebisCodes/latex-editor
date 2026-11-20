@@ -1,0 +1,66 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{amsmath,graphicx,xcolor,listings,algorithm2e}
+\definecolor{marke}{HTML}{1F6FEB}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\hl}[1]{\textcolor{marke}{\textbf{#1}}}
+\title{Lösung des 99. Aufgabenblattes}
+\author{A. Foo \and B. Bar}
+\date{\today}
+\begin{document}
+\maketitle
+\tableofcontents
+\section{Aufgabe 1}\label{sec:a}
+Deshalb \textbf{muss die Lösung so sein} also \textit{sozusagen}. Siehe Abschnitt~\ref{sec:a} und Gleichung~\eqref{eq:e}.\footnote{Eine Fußnote.}
+Nennen wir die Variable \texttt{foo}... und \hl{wichtig} -- ``Zitat'' $x \in \R$.
+
+\subsection{Teilaufgabe a)}
+\begin{itemize}
+    \item Erster Punkt
+    \item Zweiter Punkt
+    \begin{enumerate}
+      \item innen
+    \end{enumerate}
+\end{itemize}
+\begin{description}
+    \item[Erster Punkt] Beschreibung des ersten Punktes
+\end{description}
+\paragraph{Teilaufgabe (i)} Text nach paragraph.
+\begin{tabular}{l|c|r}
+    Links & Mitte & Rechts \\
+    \hline
+    1 & 2 & 3 \\
+\end{tabular}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{example-image-a.png}
+    \caption{Ein Beispielbild}
+\end{figure}
+\begin{lstlisting}[language=SQL]
+SELECT * FROM products
+WHERE price > 100;
+\end{lstlisting}
+\begin{algorithm}
+    \KwData{this text}
+    \KwResult{how to write algorithm with \LaTeX2e }
+    initialization\;
+    \While{not at end of this document}{
+        read current\;
+        \eIf{understand}{
+            go to next section\;
+        }{
+            go back\;
+        }
+    }
+    \caption{How to write algorithms}
+\end{algorithm}
+$$
+E = mc^2
+$$
+\begin{align}
+    E &= mc^2 \label{eq:e}\\
+    m &= \frac{E}{c^2}
+\end{align}
+\% \$ \_ \# \{ \} \~{}
+\end{document}

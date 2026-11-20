@@ -1,0 +1,32 @@
+\documentclass[11pt]{article}
+\usepackage[paperwidth=120mm,paperheight=150mm,margin=0mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{xcolor,graphicx,array,tabularx}
+\usepackage[scaled]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\definecolor{navy}{HTML}{14213D}
+\definecolor{gold}{HTML}{FCA311}
+\pagecolor{white}
+\begin{document}
+\colorbox{navy}{\parbox{\paperwidth}{\vspace*{6mm}\centering
+{\color{gold}\fontsize{9}{11}\selectfont\MakeUppercase{Verkaufsdossier} \textperiodcentered{} 2026}\\[3mm]
+{\color{white}\fontsize{24}{28}\selectfont\textbf{Einfamilienhaus\\in Neuhausen}}\\[5mm]}}
+\vspace{4mm}
+
+\begin{center}
+\includegraphics[width=0.8\paperwidth,height=45mm,keepaspectratio]{title-picture.jpg}
+\end{center}
+
+\hspace*{8mm}\begin{tabular}{@{}p{40mm}p{55mm}@{}}
+\textbf{Preis} & CHF 1'250'000 \\
+\textbf{Zimmer} & 5.5 \\
+\textbf{Wohnfläche} & 160\,m² \\
+\end{tabular}
+
+\vfill
+{\color{gold}\rule{\paperwidth}{2mm}}
+\begin{center}\fontsize{8}{10}\selectfont \href{https://bhvpartner.ch}{bhvpartner.ch} \hfill Tel. 052 000 00 00\end{center}
+\end{document}

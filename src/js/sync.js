@@ -70,6 +70,16 @@
  * document's (a picture under the same name gets the new content, the others
  * stay), and only data URIs of PNG, JPEG, GIF, WebP or PDF under a plain name
  * are taken - never a URL, never SVG.
+ * The page's own parts of the AI (sync.js keeps them, the prompt and the AI dialog use them):
+ *   answer: "<text>"   the "HOW TO ANSWER" part of the prompt is the page's text (marked as
+ *                      the page's); "none" leaves it out; "" gives the editor's part back. The
+ *                      prompt then carries no endpoint and no key, so no key-request is sent.
+ *   dialog: "page"     a press on the AI button sends { type: "<P>:ai-click", request, id, name }
+ *                      (host document only, once the page has spoken) and waits AI_CLICK_WAIT_MS
+ *                      for { type: "<P>:ai-click", request, handled: true }: then the page shows
+ *                      its own dialog; otherwise the editor's dialog opens.
+ * The page may answer a key-request with { type: "<P>:ai", decline: true, message }: the wait
+ * ends at once and the user sees "<host>: <message>" after copying the prompt.
  *
  * PDF: the page may send { type: "<P>:pdf", dpi } (72 to 300, default 200) and
  * gets { type: "<P>:pdf", id, name, pdf, pages } back: pdf is a data URI of a
@@ -103,6 +113,7 @@
  */
 
 import { openDialog, openConfirmation } from './dialogs.js?v=5';
+import { ANSWER_NONE } from './prompt-parts.js?v=1';
 
 /**
  * A document as the editor hands it over.
@@ -158,6 +169,17 @@ import { openDialog, openConfirmation } from './dialogs.js?v=5';
  * @property {string} [endpoint] - the https address the AI posts its result to.
  * @property {string} [key] - the key of this editor session.
  * @property {string} site - the host of the page's real origin.
+ * @property {string} [answer] - the page's own answer part of the prompt, "none" to leave it out, "" for the editor's.
+ * @property {string} [dialog] - "page" when the page shows its own AI dialog, "" otherwise.
+ */
+
+/**
+ * A press on the AI button that waits for the page's answer to "ai-click".
+ * @typedef {object} AiClickWait
+ * @property {number} request - the id the page's answer has to carry.
+ * @property {function(): void} openEditorDialog - opens the editor's own AI dialog.
+ * @property {number} timer - the timer that opens the editor's dialog after AI_CLICK_WAIT_MS.
+ * @property {number} deadline - the time (performance.now()) up to which an answer counts.
  */
 
 /**
@@ -190,6 +212,9 @@ import { openDialog, openConfirmation } from './dialogs.js?v=5';
  * @property {AiSettings|null} remoteState - the same, also while not usable: the session's key stays until "clear".
  * @property {Array<function((AiSettings|null)): void>} keyWaiters - callers waiting for the session's key.
  * @property {boolean} keyAsked - true while a key-request is on its way.
+ * @property {string} keyDecline - the page's text for the last declined key-request, "" without.
+ * @property {AiClickWait|null} aiClick - the press on the AI button waiting for the page's answer.
+ * @property {number} aiClickCount - counts the presses sent to the page: the id of the next one.
  * @property {string} hookStorageKey - the localStorage key of the general webhook.
  * @property {TokenStore} tokens - the tokens of this tab.
  * @property {HookSettings} generalHook - the general webhook.
@@ -257,6 +282,8 @@ import { openDialog, openConfirmation } from './dialogs.js?v=5';
  * @property {function(): boolean} hasValidKey - true when the session has its key and the page is there.
  * @property {function(): Promise<(AiSettings|null)>} fetchKey - asks the page for the session's key.
  * @property {function(): boolean} isHost - true when the host document is open.
+ * @property {function(function(): void): void} handleAiClick - a press on the AI button: the page's own dialog when it shows one, else the editor's (the function given).
+ * @property {function(): string} getKeyDecline - the page's text for a declined key-request ("<host>: <message>"), "" without.
  */
 
 /** True in the read-only viewer (?viewer=1). */
@@ -293,6 +320,7 @@ const CONTEXT_TITLE_LIMIT = 160;
 const CONTEXT_RULES_LIMIT = 2000;
 const TOKEN_LIMIT = 1000;
 const MESSAGE_LIMIT = 200;
+const ANSWER_LIMIT = 4000;
 const SHORT_ANSWER_LENGTH = 200;
 const MAX_LOAD_CHARACTERS = 5e6;
 const MAX_REQUEST_BYTES = 40e6;
@@ -301,6 +329,18 @@ const BYTES_PER_MB = 1e6;
 
 const MESSAGE_VERSION = 2;
 const KEY_REQUEST_WAIT_MS = 5000;
+/** How long a press on the AI button waits for the page that shows its own AI dialog. */
+const AI_CLICK_WAIT_MS = 300;
+/** The `dialog` value of a page that shows its own AI dialog. */
+const DIALOG_PAGE = 'page';
+/** Characters that break or hide a line in a one-line text from the page. */
+const LINE_BREAKING_CHARACTERS = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g;
+/** Delete and the C1 control characters, removed from the page's answer part as well. */
+const EXTRA_CONTROL_CHARACTERS = /[\u007f-\u009f]/g;
+/** Marks that change the writing direction; the page's text gets its own isolated direction. */
+const DIRECTION_MARKS = /[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
+const ISOLATE_START = '\u2068';
+const ISOLATE_END = '\u2069';
 /** A server that never finishes its answer does not hold up later saves. */
 const HOOK_TIMEOUT_MS = 60000;
 const CHANGE_REPORT_DELAY_MS = 400;
@@ -512,6 +552,17 @@ function getPlainShortText(value, maxLength) {
 }
 
 /**
+ * Returns a text from a page as one plain line: line breaks and control characters as one
+ * space, direction marks removed, cut and trimmed.
+ * @param {*} value - the value; anything but a string counts as "".
+ * @param {number} maxLength - the most characters kept.
+ * @returns {string} the cleaned line.
+ */
+function getPlainLine(value, maxLength) {
+    return (typeof value === 'string' ? value : '').replace(DIRECTION_MARKS, '').replace(LINE_BREAKING_CHARACTERS, ' ').trim().slice(0, maxLength).trim();
+}
+
+/**
  * Returns a short fingerprint of a data URI: its length and characters spread over it (cheap even for big pictures).
  * @param {string} dataUri - the picture as a data URI.
  * @returns {string} the fingerprint.
@@ -707,7 +758,7 @@ function createSyncSession(ed) {
         trusted: framed || ownWindow,
         peer: framed ? window.parent : ownWindow ? window.opener : null,
         parentOrigin: null, pageContext: null, pageHook: null, remote: null, remoteState: null,
-        keyWaiters: [], keyAsked: false,
+        keyWaiters: [], keyAsked: false, keyDecline: '', aiClick: null, aiClickCount: 0,
         hookStorageKey: ed.prefix + '.hook',
         tokens: createTokenStore(ed.prefix + '.tokens'),
         generalHook: null, postedDocument: null, host: null,
@@ -741,6 +792,8 @@ function createSyncApi(sync) {
         hasValidKey: () => hasValidKey(sync),
         fetchKey: () => fetchKey(sync),
         isHost: () => isHostOpen(sync),
+        handleAiClick: openEditorDialog => handleAiClick(sync, openEditorDialog),
+        getKeyDecline: () => sync.keyDecline,
     };
 }
 
@@ -971,7 +1024,7 @@ function setRemote(sync, message) {
     if ('key' in message && !settings.key) setAiKey(sync, settings, message.key);
     applyAiSettingsDefaults(sync, settings);
     sync.remoteState = settings;
-    sync.remote = settings.endpoint || settings.prompt ? settings : null;
+    sync.remote = settings.endpoint || settings.prompt || settings.answer ? settings : null;
     sync.ed.onAi?.(sync.remote);
     if ('key' in message) sync.keyAsked = false;
     if (sync.remote && sync.remote.key) while (sync.keyWaiters.length) sync.keyWaiters.shift()(sync.remote);
@@ -987,6 +1040,9 @@ function clearRemote(sync) {
     sync.remote = null;
     sync.remoteState = null;
     sync.keyAsked = false;
+    sync.keyDecline = '';
+    while (sync.keyWaiters.length) sync.keyWaiters.shift()(null);   // a copy waiting for a key goes on without the ended session
+    if (sync.aiClick) stopAiClick(sync, sync.aiClick.request, false);
     sync.ed.onAi?.(null);
     if (hadRemote) sync.ed.onAiEnd?.();                          // the page's AI session is over
 }
@@ -1002,6 +1058,8 @@ function copyAiTexts(settings, message) {
     if ('label' in message) settings.label = getPlainShortText(message.label, LABEL_LIMIT);
     if ('base' in message) settings.base = message.base !== false;
     if ('assets' in message) settings.assets = message.assets === true;
+    if ('answer' in message) settings.answer = message.answer === ANSWER_NONE ? ANSWER_NONE : getPlainShortText(message.answer, ANSWER_LIMIT).replace(EXTRA_CONTROL_CHARACTERS, '');
+    if ('dialog' in message) settings.dialog = message.dialog === DIALOG_PAGE ? DIALOG_PAGE : '';
 }
 
 /**
@@ -1069,7 +1127,7 @@ function getAiSettings(sync) {
 function fetchKey(sync) {
     if (!sync.remote || !isPeerThere(sync)) return Promise.resolve(null);
     if (sync.remote.key) return Promise.resolve(sync.remote);
-    if (!sync.keyAsked) { sync.keyAsked = true; sendToPage(sync, { type: 'key-request', reason: 'missing' }); }
+    if (!sync.keyAsked) { sync.keyAsked = true; sync.keyDecline = ''; sendToPage(sync, { type: 'key-request', reason: 'missing' }); }
     return new Promise(resolve => {
         /**
          * Hands the AI settings with the key to the caller and stops the wait.
@@ -1085,6 +1143,89 @@ function fetchKey(sync) {
         }, KEY_REQUEST_WAIT_MS);
         sync.keyWaiters.push(stopKeyWait);
     });
+}
+
+/**
+ * Ends a waiting key-request the page declined: the callers get no key at once, and the page's
+ * text is kept for the message after copying. A decline without a waiting request changes nothing.
+ * @param {SyncSession} sync - the session.
+ * @param {object} message - the page's "ai" message with decline: true and an optional message.
+ * @returns {void}
+ */
+function stopDeclinedKeyRequest(sync, message) {
+    if (!sync.keyAsked) return;
+    sync.keyAsked = false;
+    sync.keyDecline = buildDeclineText(sync, message.message);
+    while (sync.keyWaiters.length) sync.keyWaiters.shift()(null);
+}
+
+/**
+ * Returns the text of a declined key-request as the user sees it: the page's real host, then
+ * the page's text on one line, isolated in its own writing direction.
+ * @param {SyncSession} sync - the session.
+ * @param {*} text - the page's text.
+ * @returns {string} "<host>: <text>", or "" without a text.
+ */
+function buildDeclineText(sync, text) {
+    const line = getPlainLine(text, MESSAGE_LIMIT);
+    if (!line) return '';
+    let host = DEFAULT_SITE_LABEL;
+    try { host = new URL(sync.parentOrigin).host; } catch (error) { /* no origin yet */ }
+    return `${host}: ${ISOLATE_START}${line}${ISOLATE_END}`;
+}
+
+/**
+ * Handles a press on the AI button: a page that shows its own AI dialog is asked first and the
+ * editor's dialog opens when the page does not take it within AI_CLICK_WAIT_MS; in every other
+ * case the editor's dialog opens at once. A press while one waits is dropped.
+ * @param {SyncSession} sync - the session.
+ * @param {function(): void} openEditorDialog - opens the editor's own AI dialog.
+ * @returns {void}
+ */
+function handleAiClick(sync, openEditorDialog) {
+    if (sync.aiClick) return;
+    if (!isPageDialogOn(sync)) { openEditorDialog(); return; }
+    const request = ++sync.aiClickCount;
+    sync.aiClick = { request, openEditorDialog, deadline: performance.now() + AI_CLICK_WAIT_MS, timer: setTimeout(() => stopAiClick(sync, request, false), AI_CLICK_WAIT_MS) };
+    sendToPage(sync, { type: 'ai-click', request, id: sync.host.id, name: sync.host.name });
+}
+
+/**
+ * Tells whether a press on the AI button goes to the page: it asked with dialog: "page", it is
+ * there and has spoken, and the host document is open.
+ * @param {SyncSession} sync - the session.
+ * @returns {boolean} true when the page is asked to show its own dialog.
+ */
+function isPageDialogOn(sync) {
+    return !!(sync.remoteState && sync.remoteState.dialog === DIALOG_PAGE && sync.parentOrigin && isPeerThere(sync) && isHostOpen(sync));
+}
+
+/**
+ * Takes the page's answer to "ai-click": only for the waiting press, once, within AI_CLICK_WAIT_MS,
+ * and only while the page still shows its own dialog for the open host document.
+ * @param {SyncSession} sync - the session.
+ * @param {object} message - the page's "ai-click" message with request and handled.
+ * @returns {void}
+ */
+function receiveAiClickAnswer(sync, message) {
+    if (!sync.aiClick || message.request !== sync.aiClick.request) return;
+    const inTime = performance.now() <= sync.aiClick.deadline;
+    stopAiClick(sync, message.request, message.handled === true && inTime && isPageDialogOn(sync));
+}
+
+/**
+ * Ends a waiting press on the AI button: the editor's dialog opens unless the page took it.
+ * @param {SyncSession} sync - the session.
+ * @param {number} request - the id of the press.
+ * @param {boolean} handled - true when the page shows its own dialog.
+ * @returns {void}
+ */
+function stopAiClick(sync, request, handled) {
+    const wait = sync.aiClick;
+    if (!wait || wait.request !== request) return;
+    sync.aiClick = null;
+    clearTimeout(wait.timer);
+    if (!handled) wait.openEditorDialog();
 }
 
 /* ---------- Webhook ---------- */
@@ -1311,7 +1452,8 @@ function handlePageMessage(sync, event) {
     sync.parentOrigin = event.origin;
     const type = message.type.slice(sync.prefix.length + 1);
     if (type === 'load') importPageDocument(sync, message);
-    else if (type === 'ai') setRemote(sync, message);
+    else if (type === 'ai') { if (message.decline === true) stopDeclinedKeyRequest(sync, message); else setRemote(sync, message); }
+    else if (type === 'ai-click') receiveAiClickAnswer(sync, message);
     else if (type === 'get') sendHostDocument(sync);
     else if (type === 'save') { if (isHostOpen(sync)) saveDocument(sync); }
     else if (type === 'pdf') sendPdf(sync, message);
@@ -1827,6 +1969,6 @@ function sendClosing(sync) {
  */
 function stopPageSessionWithoutOpener(sync) {
     if (isPeerThere(sync)) return;
-    if (sync.remote) setRemote(sync, null);
+    if (sync.remote || sync.remoteState) setRemote(sync, null);
     if (sync.pageHook && sync.pageHook.page) { sync.pageHook = null; sync.status = ''; updateSyncUi(sync); }
 }

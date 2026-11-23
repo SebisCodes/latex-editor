@@ -128,7 +128,9 @@ document appears in your editor. **Undo** takes every change back. The links loo
 A tab opened with such a link hands the document to the editor tab you used last. You can
 also paste the AI's whole answer into the editor (Ctrl+V outside the code); links that a
 terminal broke over several lines are joined. When the editor is embedded in another
-website, links cannot reach it, so paste the answer there.
+website, links cannot reach it, so paste the answer there. A website that embeds the
+editor may give its own instructions for how the AI answers, or show its own AI dialog
+when you press the button; the dialog names the website and shows its instructions.
 
 **Browser agents (WebMCP):** in browsers that offer WebMCP, the page registers tools for AI
 agents that run in the page itself: `get_document`, `get_problems`, `list_sections`,

@@ -20,16 +20,16 @@
  *   6. offer the test hook window.latexEditor.
  */
 
-import { createI18n } from './i18n.js?v=25';
+import { createI18n } from './i18n.js?v=26';
 import { createWrap } from './wrap.js?v=5';
-import { createAiStatus } from './aistatus.js?v=8';
-import { createSync, VIEWER } from './sync.js?v=23';
+import { createAiStatus } from './aistatus.js?v=9';
+import { createSync, VIEWER } from './sync.js?v=24';
 import './export-menu.js?v=6';
 import { startConvert } from './convert-to.js?v=14';
 import { START } from './samples.js?v=3';
 import { store } from './files.js?v=11';
 import { assets } from './assets.js?v=6';
-import { createAi } from './ai.js?v=16';
+import { createAi } from './ai.js?v=17';
 import { createMcp } from './mcp.js?v=6';
 import { formatLatex } from './latex-tidy.js?v=2';
 import { drawPageCanvas } from './page-export.js?v=4';
@@ -53,7 +53,7 @@ import { startKeyboard } from './keyboard.js?v=4';
 import { showSplit, startLayout, startDialogs } from './layout.js?v=4';
 import { startExportDialog } from './export-dialog.js?v=4';
 import { createPicturePdf } from './export.js?v=4';
-import { receiveDocument, importExternalDocument } from './incoming.js?v=4';
+import { receiveDocument, importExternalDocument } from './incoming.js?v=5';
 import {
     getPromptState, getProblemList, getSectionList, getFileList, openFileByName, createFile, addLatex, updateText, showLine,
 } from './agent-api.js?v=4';
@@ -236,6 +236,8 @@ function startAiAndSync() {
         getRemote: () => areas.sync?.getAiSettings() || null,
         fetchKey: () => (areas.sync ? areas.sync.fetchKey() : Promise.resolve(null)),
         hasValidKey: () => !!areas.sync?.hasValidKey(),
+        handleAiClick: openEditorDialog => (areas.sync ? areas.sync.handleAiClick(openEditorDialog) : openEditorDialog()),
+        getKeyDecline: () => areas.sync?.getKeyDecline() || '',
     });
     const agent = createMcp({
         onUse: () => areas.aiStatus.addDelivery('agent'),

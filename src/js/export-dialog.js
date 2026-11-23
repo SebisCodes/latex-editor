@@ -6,16 +6,16 @@
  * around the editor when one is set up, else downloads.
  */
 
-import { getPlainText } from './latex.js?v=14';
-import { drawPageCanvas, getCanvasBlob, getStandaloneHtml } from './page-export.js?v=3';
+import { getPlainText } from './latex.js?v=15';
+import { drawPageCanvas, getCanvasBlob, getStandaloneHtml } from './page-export.js?v=4';
 import { createZip } from './zip.js?v=4';
 import { openDialog } from './dialogs.js?v=5';
 import { saveFile, getSafeName } from './util.js?v=3';
 import { state, ui, areas, getElement, showToast } from './state.js?v=2';
-import { renderPreview } from './preview.js?v=3';
-import { getPageSize, getCurrentPage } from './zoom.js?v=3';
-import { stopTextEdit } from './text-edit.js?v=3';
-import { getPagePictures, runPrint, createTexZip, createAllZip } from './export.js?v=3';
+import { renderPreview } from './preview.js?v=4';
+import { getPageSize, getCurrentPage } from './zoom.js?v=4';
+import { stopTextEdit } from './text-edit.js?v=4';
+import { getPagePictures, runPrint, createTexZip, createAllZip } from './export.js?v=4';
 
 /** The formats exported as page pictures. */
 const PICTURE_FORMATS = /^(png|jpeg|webp)$/;

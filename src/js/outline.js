@@ -4,11 +4,11 @@
  * screens the pages pane is shown).
  */
 
-import { escapeHtml } from './latex.js?v=14';
+import { escapeHtml } from './latex.js?v=15';
 import { state, ui, NARROW_SCREEN } from './state.js?v=2';
-import { showCodePosition } from './code-view.js?v=3';
-import { updatePageLabel } from './zoom.js?v=3';
-import { showPane } from './layout.js?v=3';
+import { showCodePosition } from './code-view.js?v=4';
+import { updatePageLabel } from './zoom.js?v=4';
+import { showPane } from './layout.js?v=4';
 
 /** Pixels above a heading when the pages scroll to it. */
 const HEADING_TOP_MARGIN = 20;

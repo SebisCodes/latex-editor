@@ -82,6 +82,7 @@ const KOMA_BOTTOM_FACTOR = 0.7;
  * @typedef {object} RenderOptions
  * @property {?Object<string, string>} [assets] - the pictures of the document, data URIs by name.
  * @property {?PreviousPass} [prev] - the result of the first pass, for the second.
+ * @property {?string} [template] - the template syntax of the placeholders ("mustache", "angle"), or null for plain LaTeX.
  */
 
 /**

@@ -284,6 +284,8 @@ input[type=color] { width: 34px; height: 30px; padding: 2px; border: 1px solid v
 .hl .c { color: var(--c-comment); font-style: italic; }
 .hl .e { color: var(--c-ent); }
 .hl .d { color: var(--c-special); }
+/* A template placeholder (?template=): color and background only, so the text keeps the textarea's width. */
+.hl .tp { color: var(--c-value); background: color-mix(in srgb, var(--c-value) 14%, transparent); border-radius: 3px; font-style: normal; }
 
 /* ---------- Tools ---------- */
 

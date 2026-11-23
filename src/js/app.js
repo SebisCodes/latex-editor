@@ -20,7 +20,7 @@
  *   6. offer the test hook window.latexEditor.
  */
 
-import { createI18n } from './i18n.js?v=24';
+import { createI18n } from './i18n.js?v=25';
 import { createWrap } from './wrap.js?v=5';
 import { createAiStatus } from './aistatus.js?v=8';
 import { createSync, VIEWER } from './sync.js?v=23';
@@ -32,31 +32,31 @@ import { assets } from './assets.js?v=6';
 import { createAi } from './ai.js?v=16';
 import { createMcp } from './mcp.js?v=6';
 import { formatLatex } from './latex-tidy.js?v=2';
-import { drawPageCanvas } from './page-export.js?v=3';
+import { drawPageCanvas } from './page-export.js?v=4';
 import { state, ui, areas, PREFIX, getElement, showToast } from './state.js?v=2';
-import { getSettings, startStorageSync } from './storage.js?v=3';
-import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=3';
-import { setCode, addHistoryStep, undo, redo } from './history.js?v=3';
-import { renderPreview, startPreview, startFontsWatch } from './preview.js?v=3';
-import { setZoom, showPage, startZoom } from './zoom.js?v=3';
-import { startPageClicks, startTextEditing } from './text-edit.js?v=3';
-import { startPictureMoving } from './picture-move.js?v=3';
-import { startProblems } from './problems.js?v=3';
-import { startTyping } from './typing.js?v=3';
-import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=3';
-import { startPicturesTab } from './pictures-tab.js?v=3';
-import { startSettingsPanel } from './settings-panel.js?v=3';
-import { startOutline } from './outline.js?v=3';
-import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=3';
-import { showFilePicker, startFileImport } from './file-import.js?v=3';
-import { startKeyboard } from './keyboard.js?v=3';
-import { showSplit, startLayout, startDialogs } from './layout.js?v=3';
-import { startExportDialog } from './export-dialog.js?v=3';
-import { createPicturePdf } from './export.js?v=3';
-import { receiveDocument, importExternalDocument } from './incoming.js?v=3';
+import { getSettings, startStorageSync } from './storage.js?v=4';
+import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=4';
+import { setCode, addHistoryStep, undo, redo } from './history.js?v=4';
+import { renderPreview, startPreview, startFontsWatch } from './preview.js?v=4';
+import { setZoom, showPage, startZoom } from './zoom.js?v=4';
+import { startPageClicks, startTextEditing } from './text-edit.js?v=4';
+import { startPictureMoving } from './picture-move.js?v=4';
+import { startProblems } from './problems.js?v=4';
+import { startTyping } from './typing.js?v=4';
+import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=4';
+import { startPicturesTab } from './pictures-tab.js?v=4';
+import { startSettingsPanel } from './settings-panel.js?v=4';
+import { startOutline } from './outline.js?v=4';
+import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=4';
+import { showFilePicker, startFileImport } from './file-import.js?v=4';
+import { startKeyboard } from './keyboard.js?v=4';
+import { showSplit, startLayout, startDialogs } from './layout.js?v=4';
+import { startExportDialog } from './export-dialog.js?v=4';
+import { createPicturePdf } from './export.js?v=4';
+import { receiveDocument, importExternalDocument } from './incoming.js?v=4';
 import {
     getPromptState, getProblemList, getSectionList, getFileList, openFileByName, createFile, addLatex, updateText, showLine,
-} from './agent-api.js?v=3';
+} from './agent-api.js?v=4';
 
 /** The fonts of the pages, loaded before the first pages are laid out. */
 const PAGE_FONTS = ['400 16px "LM Roman"', '700 16px "LM Roman"', 'italic 400 16px "LM Roman"', '400 16px "LM Mono"', '400 16px "LM Sans"', '700 16px "LM Sans"'];

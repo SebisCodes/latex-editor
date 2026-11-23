@@ -1,0 +1,36 @@
+% A short letter with placeholders; the server fills them in comments too: {{name}}.
+% Example values: John Doe, 1 Main Street, 8000 Springfield.
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=25mm]{geometry}
+\setlength{\parindent}{0pt}
+\newcommand{\field}[1]{\textbf{#1}}
+
+\begin{document}
+{{name}}\\
+{{street}}\\
+{{postalCode}} {{city}}{{#hasCountry}}\\{{country}}{{/hasCountry}}
+
+\bigskip
+{{date}}
+
+\section*{Your order {{orderNumber}}}
+
+Dear {{name}},
+
+thank you for your order. We will ship the following items to \field{{{city}}}:
+\begin{itemize}
+{{#items}}  \item {{label}}: {{quantity}} pieces at {{price}} each
+{{/items}}\end{itemize}
+The total is $ {{total}} $ including tax.
+
+{{#hasNote}}
+\emph{Note:} {{note}}
+{{/hasNote}}
+{{^hasNote}}
+If you have questions, simply reply to this letter.
+{{/hasNote}}
+
+Kind regards\\
+{{senderName}}
+\end{document}

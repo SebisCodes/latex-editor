@@ -5,7 +5,7 @@
  */
 
 import { state, ui, NARROW_SCREEN, PIXELS_PER_MM, getElement, getNumberInRange } from './state.js?v=2';
-import { saveState } from './storage.js?v=3';
+import { saveState } from './storage.js?v=4';
 
 /** The paper size before the first rendering: A4 in millimeters. */
 const DEFAULT_PAPER_MM = { w: 210, h: 297 };

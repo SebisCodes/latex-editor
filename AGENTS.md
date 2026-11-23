@@ -65,6 +65,7 @@ python tests/i18n_test.py      # the language pages
 python tests/pdf_test.py       # the PDF of the page's document for the page
 python tests/remote_test.py    # AI through the page's server, one key per session
 python tests/security_test.py  # what a hostile page or link must not do
+python tests/template_test.py  # template placeholders (?template=), runs in Node alone
 python tests/window_test.py    # the editor in its own window opened by a page
 ```
 

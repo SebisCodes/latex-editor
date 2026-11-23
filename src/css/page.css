@@ -179,6 +179,9 @@
 .sheet .katex { font-size: 1.0em; text-indent: 0; }
 .sheet .katex-display > .katex { text-align: center; }
 .sheet .math-error, .sheet .mathsrc { color: #c62f2f; background: #fdecec; font-size: 0.85em; white-space: pre-wrap; }
+/* A template placeholder (?template=): a value as a box with its name, the tags of a section as smaller marks. */
+.sheet .template-tag { font-family: var(--mono); font-size: 0.8em; color: #0b5a38; background: #e6f4ec; border: 1px solid #b7dcc6; border-radius: 3px; padding: 0 0.25em; white-space: nowrap; text-indent: 0; }
+.sheet .template-section { font-size: 0.7em; color: #4a4f5d; background: #f1f2f5; border-color: #d5d8e0; }
 
 /* ---------- Tables, floats, pictures ---------- */
 

@@ -5,14 +5,14 @@
  * everything at once as a ZIP.
  */
 
-import { getPlainText } from './latex.js?v=14';
-import { drawPageCanvas, getCanvasBlob, getStandaloneHtml, openPrintDialog } from './page-export.js?v=3';
+import { getPlainText } from './latex.js?v=15';
+import { drawPageCanvas, getCanvasBlob, getStandaloneHtml, openPrintDialog } from './page-export.js?v=4';
 import { createJpegPdf } from './pdf.js?v=3';
 import { createZip } from './zip.js?v=4';
 import { getDataUrlBytes } from './assets.js?v=6';
 import { state } from './state.js?v=2';
-import { renderPreview } from './preview.js?v=3';
-import { getCurrentPage } from './zoom.js?v=3';
+import { renderPreview } from './preview.js?v=4';
+import { getCurrentPage } from './zoom.js?v=4';
 
 /** The resolution of the PDF of page pictures, in dots per inch, when none is asked for. */
 const DEFAULT_PDF_DPI = 200;

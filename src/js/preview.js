@@ -10,16 +10,19 @@
  *      the outline and the document settings again, and frame the element at the cursor.
  */
 
-import { render, escapeHtml } from './latex.js?v=14';
-import { renderPages } from './viewer.js?v=12';
+import { render, escapeHtml } from './latex.js?v=15';
+import { renderPages } from './viewer.js?v=13';
 import { state, ui, getElements } from './state.js?v=2';
-import { renderCode } from './code-view.js?v=3';
-import { showZoom, updatePageLabel } from './zoom.js?v=3';
-import { renderProblems } from './problems.js?v=3';
-import { renderPicturesTab } from './pictures-tab.js?v=3';
-import { renderOutline } from './outline.js?v=3';
-import { renderSettingsPanel } from './settings-panel.js?v=3';
+import { renderCode } from './code-view.js?v=4';
+import { showZoom, updatePageLabel } from './zoom.js?v=4';
+import { renderProblems } from './problems.js?v=4';
+import { renderPicturesTab } from './pictures-tab.js?v=4';
+import { renderOutline } from './outline.js?v=4';
+import { renderSettingsPanel } from './settings-panel.js?v=4';
+import { getTemplateNameByAddress } from './latex-template.js?v=1';
 
+/** The template syntax of the placeholders the page asked for with ?template= in the address, or null. */
+export const TEMPLATE_NAME = getTemplateNameByAddress(location.search);
 /** How long the pages wait after typing before they are rendered, in milliseconds. */
 export const RENDER_DELAY = 280;
 /** How long the pages wait for more fonts before they are laid out again, in milliseconds. */
@@ -74,7 +77,7 @@ export function renderPreview() {
  */
 function getRenderResult() {
     try {
-        return render(state.code, { assets: state.assets });
+        return render(state.code, { assets: state.assets, template: TEMPLATE_NAME });
     } catch (error) {
         console.error(error);
         const meta = render('').meta;

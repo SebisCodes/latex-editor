@@ -87,6 +87,8 @@ Editor -> page (sent to the page around the editor, or to window.opener in its o
 
 `?theme=light`, `?theme=dark` or `?theme=auto` (with or without `embed`) fixes the color theme for that page load and hides the theme switch; the user's own stored choice is not changed. Other values are ignored.
 
+`?template=mustache` (or `?template=angle`) is for pages whose server fills placeholders into the LaTeX before it is compiled: `{{name}}`, `{{#name}} … {{/name}}`, `{{^name}} … {{/name}}` (with `angle`: `<<name>>`, `<<?name>> … <</?name>>`). The code view colors the tags, the preview shows them as small boxes, and the list of problems reads every tag as one placeholder token; it reports a section left open, a stray end tag, an end tag in the wrong order and a tag with a sign outside the syntax. The two values `mustache` and `angle` switch it on.
+
 `?lang=de` shows the editor's interface in German (menus, buttons, dialogs, messages), `?lang=en` in English (the default). `/` leads to the browser's language, and a language picked in the menu holds for every giit.ch site. The AI prompt is always English.
 
 Page -> editor (only from the page around the editor or the opener; after its first message only from that origin; pages without a real origin are ignored):

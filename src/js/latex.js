@@ -28,7 +28,7 @@ import { LETTER, createScanner, getPosition, findClosingBrace, findClosingBracke
 import { Flow } from './latex-flow.js?v=2';
 import { TexDocument } from './latex-document.js?v=3';
 import { SKIPPED_COMMANDS } from './latex-skipped-commands.js?v=2';
-import { MATH_METHODS } from './latex-math.js?v=3';
+import { MATH_METHODS } from './latex-math.js?v=4';
 import { TABLE_METHODS } from './latex-tables.js?v=3';
 import { BLOCK_METHODS } from './latex-blocks.js?v=3';
 import { ALGORITHM_METHODS } from './latex-algorithms.js?v=2';
@@ -38,6 +38,7 @@ import { BOX_COMMANDS } from './latex-box-commands.js?v=3';
 import { PAGE_COMMANDS, PAGE_METHODS } from './latex-page-commands.js?v=3';
 import { DEFINITION_COMMANDS, DEFINITION_METHODS } from './latex-definitions.js?v=2';
 import { PREAMBLE_METHODS } from './latex-preamble.js?v=3';
+import { getTemplateSyntax, findTemplateTagAt, checkTemplateSections, formatTemplateTagLabel } from './latex-template.js?v=1';
 
 export { escapeHtml, PAPERS };
 
@@ -182,6 +183,8 @@ class Renderer {
                 if (nl >= 2) flow.closeParagraph(); else flow.addSpace();
                 continue;
             }
+            const templateTag = findTemplateTagAt(s, i, doc.templateSyntax);
+            if (templateTag && templateTag.end <= scan.end) { this.renderTemplateTag(flow, scan, templateTag); continue; }
             if (c === '{') { scan.i++; flow.openGroup(); continue; }
             if (c === '}') {
                 scan.i++;
@@ -204,13 +207,28 @@ class Renderer {
             if (c === '\\') { this.renderCommand(flow, scan); continue; }
             // Plain text up to the next special character.
             let k = i;
-            while (k < scan.end && !'\\{}$%&~#^_ \t\n\r'.includes(s[k])) k++;
+            while (k < scan.end && !'\\{}$%&~#^_ \t\n\r'.includes(s[k]) && !findTemplateTagAt(s, k, doc.templateSyntax)) k++;
             if (k === i) k++;
             scan.i = k;
             const t = s.slice(i, k), shown = this.getShownText(t);
             if (scan.v < 0 && s === doc.src && shown.length === t.length) flow.addSourceText(escapeHtml(shown), i, t.length, s);
             else flow.addHtml(escapeHtml(shown), getPosition(scan, i));
         }
+    }
+
+    /**
+     * Renders a template placeholder (a page's server replaces it before LaTeX runs) as one small
+     * box with its sign and name.
+     * @param {Flow} flow - the flow to write into.
+     * @param {Scanner} scan - the scanner at the tag; moved past it.
+     * @param {import('./latex-template.js').TemplateTag} tag - the tag.
+     * @returns {void}
+     */
+    renderTemplateTag(flow, scan, tag) {
+        scan.i = tag.end;
+        const pos = getPosition(scan, tag.start);
+        const className = tag.kind === 'value' ? 'template-tag' : 'template-tag template-section';
+        flow.addHtml(`<span class="${className}" data-p="${pos}">${escapeHtml(formatTemplateTagLabel(tag))}</span>`, pos);
     }
 
     /**
@@ -744,6 +762,7 @@ const GERMAN_WORD_COUNT = 6;
 function renderPass(source, options) {
     const doc = new TexDocument(source, options);
     doc.mathOps = {};
+    doc.templateSyntax = getTemplateSyntax(options.template);
     const renderer = new Renderer(doc);
     const { bodyStart, bodyEnd } = readDocumentParts(renderer, source);
     doc.updateLayout();
@@ -787,9 +806,10 @@ function readDocumentParts(renderer, source) {
 
 /**
  * Renders LaTeX code; documents with references, citations or a table of contents are read a
- * second time with the labels, outline and captions of the first pass.
+ * second time with the labels, outline and captions of the first pass. With a template syntax,
+ * the sections of the placeholders are checked as well.
  * @param {string} source - the LaTeX code.
- * @param {RenderOptions} [options={}] - the pictures of the document, data URIs by name.
+ * @param {RenderOptions} [options={}] - the pictures of the document (data URIs by name) and the template syntax of its placeholders.
  * @returns {RenderResult} the blocks, page settings, outline, labels, problems and captions.
  */
 export function render(source, options = {}) {
@@ -803,6 +823,7 @@ export function render(source, options = {}) {
         const noise = new Set([...doc.loopEnvs].flatMap(name => [`\\begin{${name}} is never closed - add \\end{${name}}`, `\\end{${name}} without a matching \\begin{${name}}`]));
         doc.problems = doc.problems.filter(problem => !noise.has(problem.msg));
     }
+    if (doc.templateSyntax) for (const problem of checkTemplateSections(source, doc.templateSyntax)) doc.addProblem(problem.pos, problem.msg, problem.kind);
     doc.problems.sort((first, second) => first.pos - second.pos);
     return { blocks, meta: doc.meta, outline: doc.outline, labels: doc.labels, problems: doc.problems, captions: doc.captions || [] };
 }

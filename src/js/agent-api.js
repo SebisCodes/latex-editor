@@ -7,10 +7,10 @@
 
 import { store } from './files.js?v=11';
 import { state, ui, areas } from './state.js?v=2';
-import { setCode } from './history.js?v=3';
-import { getLineIndex, getLineStartPlace, showCodePosition } from './code-view.js?v=3';
-import { showCodeElement } from './preview.js?v=3';
-import { openDocument, openNewDocument, createBlankDocument } from './documents.js?v=3';
+import { setCode } from './history.js?v=4';
+import { getLineIndex, getLineStartPlace, showCodePosition } from './code-view.js?v=4';
+import { showCodeElement } from './preview.js?v=4';
+import { openDocument, openNewDocument, createBlankDocument } from './documents.js?v=4';
 
 const AI_DOCUMENT_NAME = 'AI document';
 const END_DOCUMENT = '\\end{document}';

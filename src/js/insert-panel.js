@@ -4,11 +4,11 @@
  * it needs to the preamble; a symbol outside math goes into $…$.
  */
 
-import { escapeHtml } from './latex.js?v=15';
+import { escapeHtml } from './latex.js?v=16';
 import { state, ui, getElement, getElements } from './state.js?v=2';
-import { addSnippet, addCommandAroundSelection } from './code-insert.js?v=4';
-import { addPackage, addPreambleLine } from './preamble-edit.js?v=4';
-import { renderPicturesTab } from './pictures-tab.js?v=4';
+import { addSnippet, addCommandAroundSelection } from './code-insert.js?v=5';
+import { addPackage, addPreambleLine } from './preamble-edit.js?v=5';
+import { renderPicturesTab } from './pictures-tab.js?v=5';
 
 /** The snippets by key: [text, block]. "|" marks the cursor, "§" the selected text. */
 const SNIPPETS = {

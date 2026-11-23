@@ -10,14 +10,14 @@
  */
 
 import { MILLIMETER_PX, PAPERS, ONE_HALF_SPACING, DOUBLE_SPACING } from './latex-units.js?v=3';
-import { KNOWN_PACKAGES, NOT_SHOWN_PACKAGES } from './latex-names.js?v=2';
-import { findEnvironmentEnd } from './latex-scan.js?v=2';
-import { Flow } from './latex-flow.js?v=2';
+import { KNOWN_PACKAGES, NOT_SHOWN_PACKAGES } from './latex-names.js?v=3';
+import { findEnvironmentEnd } from './latex-scan.js?v=3';
+import { Flow } from './latex-flow.js?v=3';
 
 /** The classes the preview knows (others are shown like article and reported). */
 const KNOWN_CLASSES = /^(article|report|book|letter|scrartcl|scrreprt|scrbook|scrlttr2|memoir|amsart|minimal|standalone|beamer|extarticle|extreport|moderncv|IEEEtran|llncs|revtex4|revtex4-1|revtex4-2|kdiartcl|exam|paper|proc)$/;
 /** Commands of the preamble that run through the command tables. */
-const PREAMBLE_COMMANDS = /^(newcommand|renewcommand|providecommand|def|let|newenvironment|renewenvironment|newtheorem|theoremstyle|DeclareMathOperator|definecolor|colorlet|setlength|linespread|geometry|pagestyle|pagenumbering|setcounter|hypersetup|lstset|onehalfspacing|doublespacing|pagecolor|newcounter|newlength|graphicspath|addtolength|sisetup|usetikzlibrary|newcolumntype|captionsetup|setlist|titleformat|titlespacing|fancyhf|fancyhead|fancyfoot|lhead|chead|rhead|lfoot|cfoot|rfoot|DeclareRobustCommand|NewDocumentCommand|selectlanguage|university|institute|lecture|semester|group|makeatletter|makeatother|PassOptionsToPackage|renewcommandx|newcommandx|frenchspacing|sloppy|hyphenation|nopagecolor|AtBeginDocument|bibliographystyle|addbibresource|color|urlstyle|setmainfont|setsansfont|setmonofont)$/;
+const PREAMBLE_COMMANDS = /^(newcommand|renewcommand|providecommand|def|let|newenvironment|renewenvironment|newtheorem|theoremstyle|DeclareMathOperator|definecolor|colorlet|setlength|linespread|geometry|pagestyle|pagenumbering|setcounter|hypersetup|lstset|onehalfspacing|doublespacing|pagecolor|newcounter|newlength|graphicspath|addtolength|sisetup|usetikzlibrary|newcolumntype|captionsetup|setlist|titleformat|titlespacing|fancyhf|fancyhead|fancyfoot|lhead|chead|rhead|lfoot|cfoot|rfoot|DeclareRobustCommand|NewDocumentCommand|selectlanguage|university|institute|lecture|semester|group|makeatletter|makeatother|PassOptionsToPackage|renewcommandx|newcommandx|frenchspacing|sloppy|hyphenation|nopagecolor|AtBeginDocument|bibliographystyle|addbibresource|color|urlstyle|setmainfont|setsansfont|setmonofont|arrayrulecolor)$/;
 /** Commands of the preamble that are skipped without a report although no table has them. */
 const QUIET_COMMANDS = /^(makeatletter|makeatother|DeclareUnicodeCharacter|DeclareFontFamily|newif|ifdefined|fi|else|relax|let|global|edef|xdef|gdef|newsavebox|sbox|savebox|input)$/;
 /** Packages that make the whole document sans serif (helvet only with an option). */
@@ -169,8 +169,9 @@ function setClassOption(meta, option) {
 }
 
 /**
- * Sets what a package with its options changes: geometry, German, parskip, the fonts, line
- * spacing and the color names of xcolor.
+ * Sets what a package with its options changes: geometry, German, parskip, the fonts (tgheros, a
+ * Helvetica face, is the sans-serif face; \renewcommand{\familydefault}{\sfdefault} makes it the
+ * text face), line spacing and the color names of xcolor.
  * @param {TexDocument} doc - the document state.
  * @param {string} packageName - the package.
  * @param {string} options - its options as written.
@@ -186,6 +187,7 @@ function setPackageOption(doc, packageName, options) {
         if (/scaled|default|sfdefault/.test(options) || packageName !== 'helvet') meta.sans = packageName !== 'helvet' || /sfdefault/.test(options) ? true : meta.sans;
         meta.sansFont = packageName;
     }
+    else if (packageName === 'tgheros') meta.sansFont = 'helvet';
     else if (TIMES_PACKAGES.includes(packageName)) meta.fontFamily = 'times';
     else if (PALATINO_PACKAGES.includes(packageName)) meta.fontFamily = 'palatino';
     else if (packageName === 'setspace') { if (/onehalfspacing/.test(options)) meta.spread = ONE_HALF_SPACING; if (/doublespacing/.test(options)) meta.spread = DOUBLE_SPACING; }

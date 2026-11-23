@@ -8,12 +8,13 @@
  */
 
 import { getModelColor, getColorValue } from './latex-units.js?v=3';
-import { createScanner, getPosition, findClosingBrace, splitTopLevel } from './latex-scan.js?v=2';
+import { createScanner, getPosition, findClosingBrace, splitTopLevel } from './latex-scan.js?v=3';
+import { findTemplateTagAt } from './template-tags.js?v=1';
 
 /** Table environments with a width as first argument. */
 const WIDE_TABLES = new Set(['tabular*', 'tabularx', 'xltabular', 'tabulary']);
 /** Commands at the start of a table row: rules and row settings. */
-const ROW_COMMAND = /^\\(hline|toprule|midrule|bottomrule|cline|cmidrule|specialrule|rowcolor|addlinespace|noalign|hhline|morecmidrules|endhead|endfirsthead|endfoot|endlastfoot|hdashline)\b/;
+const ROW_COMMAND = /^\\(hline|toprule|midrule|bottomrule|cline|cmidrule|specialrule|rowcolor|arrayrulecolor|addlinespace|noalign|hhline|morecmidrules|endhead|endfirsthead|endfoot|endlastfoot|hdashline)\b/;
 /** The thickness of booktabs rules in points; other rules are 0.4 pt. */
 const RULE_WIDTHS = { toprule: 0.8, bottomrule: 0.8, midrule: 0.5 };
 
@@ -24,6 +25,7 @@ const RULE_WIDTHS = { toprule: 0.8, bottomrule: 0.8, midrule: 0.5 };
  * @property {number} [from] - the first column of a part rule, 1-based.
  * @property {number} [to] - the last column of a part rule.
  * @property {number} w - the thickness in points.
+ * @property {?string} [color] - the color of \arrayrulecolor, null for the text color.
  */
 
 /**
@@ -78,17 +80,18 @@ function getCellStyles(content, spec, row, bottomRules, column, columnCount) {
     if (columnSpec.width) styles.push(`width:${columnSpec.width}`);
     if (columnSpec.align === 'c') styles.push('text-align:center'); else if (columnSpec.align === 'r') styles.push('text-align:right'); else if (columnSpec.align === 'j') styles.push('text-align:justify');
     if (columnSpec.valign) styles.push('vertical-align:' + columnSpec.valign);
-    if (columnSpec.lb && (column === 0 || content.isMulticolumn)) styles.push(`border-left:${columnSpec.lb > 1 ? 'double 2.5px' : 'solid 0.4pt'} currentColor`);
-    if (columnSpec.rb) styles.push(`border-right:${columnSpec.rb > 1 ? 'double 2.5px' : 'solid 0.4pt'} currentColor`);
+    const ruleColor = spec.ruleColor || 'currentColor';
+    if (columnSpec.lb && (column === 0 || content.isMulticolumn)) styles.push(`border-left:${columnSpec.lb > 1 ? 'double 2.5px' : 'solid 0.4pt'} ${ruleColor}`);
+    if (columnSpec.rb) styles.push(`border-right:${columnSpec.rb > 1 ? 'double 2.5px' : 'solid 0.4pt'} ${ruleColor}`);
     if (columnSpec.color) styles.push('background:' + columnSpec.color);
     if (row.rowColor) styles.push('background:' + row.rowColor);
     if (content.cellColor) styles.push('background:' + content.cellColor);
     if (spec.firstPad === 0 && column === 0) styles.push('padding-left:0');
     if (spec.lastPad === 0 && column + content.span >= columnCount) styles.push('padding-right:0');
     for (const rule of row.rules) {
-        if (rule.type === 'full' || (column + 1 >= rule.from && column + 1 <= rule.to)) styles.push(`border-top:${rule.w}pt solid currentColor`);
+        if (rule.type === 'full' || (column + 1 >= rule.from && column + 1 <= rule.to)) styles.push(`border-top:${rule.w}pt solid ${rule.color || 'currentColor'}`);
     }
-    if (bottomRules.length) styles.push(`border-bottom:${bottomRules[0].w}pt solid currentColor`);
+    if (bottomRules.length) styles.push(`border-bottom:${bottomRules[0].w}pt solid ${bottomRules[0].color || 'currentColor'}`);
     return styles;
 }
 
@@ -107,7 +110,7 @@ export const TABLE_METHODS = {
     renderTabular(flow, scan, pos, name) {
         const width = WIDE_TABLES.has(name) ? this.getLength(this.getRawText(scan, this.readArgument(scan, name))) : null;
         const verticalAlign = this.readOption(scan);
-        const spec = this.parseColumnSpec(this.getRawText(scan, this.readArgument(scan, name)), pos);
+        const spec = { ...this.parseColumnSpec(this.getRawText(scan, this.readArgument(scan, name)), pos), ruleColor: this.doc.ruleColor || null };
         const { rows, trailingRules } = this.readTableRows(scan, pos);
         let html = '';
         for (let index = 0; index < rows.length; index++) {
@@ -164,24 +167,54 @@ export const TABLE_METHODS = {
         let rowColor = null;
         for (;;) {
             this.moveOverSpace(rowScan);
+            this.moveOverSectionTagBeforeRule(rowScan);
             const match = ROW_COMMAND.exec(text.slice(rowScan.i, rowScan.i + 20));
             if (!match) break;
             rowScan.i += match[0].length;
             const command = match[1];
+            if (command === 'arrayrulecolor') { this.readRuleColor(rowScan, pos); continue; }
             if (command === 'cline' || command === 'cmidrule') {
                 if (command === 'cmidrule') { const trim = /^\s*\([^)]*\)/.exec(text.slice(rowScan.i)); if (trim) rowScan.i += trim[0].length; }
                 const [from, to] = this.getRawText(rowScan, this.readArgument(rowScan, command)).split('-').map(Number);
-                rules.push({ type: 'part', from, to: to || from, w: command === 'cmidrule' ? 0.5 : 0.4 });
+                rules.push({ type: 'part', from, to: to || from, w: command === 'cmidrule' ? 0.5 : 0.4, color: this.doc.ruleColor || null });
             } else if (command === 'rowcolor') {
                 const model = this.readOption(rowScan);
                 const value = this.readArgument(rowScan, command);
                 rowColor = model ? '#' + (getModelColor(this.getRawText(rowScan, model), this.getRawText(rowScan, value)) || 'ffffff') : this.doc.getResolvedColor(this.getRawText(rowScan, value), pos);
-            } else if (command === 'specialrule') { this.readArgument(rowScan, command); this.readArgument(rowScan, command); this.readArgument(rowScan, command); rules.push({ type: 'full', w: 1 }); }
+            } else if (command === 'specialrule') { this.readArgument(rowScan, command); this.readArgument(rowScan, command); this.readArgument(rowScan, command); rules.push({ type: 'full', w: 1, color: this.doc.ruleColor || null }); }
             else if (command === 'addlinespace') { this.readOption(rowScan); }
             else if (command === 'noalign' || command === 'hhline') { this.readArgument(rowScan, command); }
-            else if (!/^end/.test(command) && command !== 'morecmidrules') rules.push({ type: 'full', w: RULE_WIDTHS[command] || 0.4 });
+            else if (!/^end/.test(command) && command !== 'morecmidrules') rules.push({ type: 'full', w: RULE_WIDTHS[command] || 0.4, color: this.doc.ruleColor || null });
         }
         return { rules, rowColor };
+    },
+
+    /**
+     * Reads the color of \arrayrulecolor ([model]{value} or a color expression) and keeps it as the
+     * color of the next rules.
+     * @this {Renderer}
+     * @param {Scanner} scan - the scanner after the command name.
+     * @param {number} pos - the offset of the command in the code.
+     * @returns {void}
+     */
+    readRuleColor(scan, pos) {
+        const model = this.readOption(scan);
+        const value = this.getRawText(scan, this.readArgument(scan, 'arrayrulecolor'));
+        const color = model ? getModelColor(this.getRawText(scan, model), value) && '#' + getModelColor(this.getRawText(scan, model), value) : this.doc.getResolvedColor(value, pos);
+        if (color) this.doc.ruleColor = color;
+    },
+    /**
+     * Moves past a template section tag at the start of a row when a rule or row setting follows it,
+     * so a template's section line before \midrule leaves the rule a rule (a reader).
+     * @this {Renderer}
+     * @param {Scanner} rowScan - the scanner over the row.
+     * @returns {void}
+     */
+    moveOverSectionTagBeforeRule(rowScan) {
+        const tag = findTemplateTagAt(rowScan.s, rowScan.i, this.doc.templateSyntax);
+        if (!tag || tag.kind === 'value') return;
+        const after = /^\s*/.exec(rowScan.s.slice(tag.end, tag.end + 200))[0].length;
+        if (ROW_COMMAND.test(rowScan.s.slice(tag.end + after, tag.end + after + 20))) rowScan.i = tag.end + after;
     },
 
     /**

@@ -7,7 +7,7 @@
  */
 
 import { escapeHtml } from './latex-units.js?v=3';
-import { createScanner } from './latex-scan.js?v=2';
+import { createScanner } from './latex-scan.js?v=3';
 import { handleSkippedCommand } from './latex-skipped-commands.js?v=2';
 
 /** @type {Object<string, CommandHandler>} */

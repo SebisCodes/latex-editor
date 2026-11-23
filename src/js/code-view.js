@@ -8,12 +8,12 @@
  * cursor is framed while the code has the focus.
  */
 
-import { escapeHtml } from './latex.js?v=15';
-import { highlight } from './latex-highlight.js?v=4';
+import { escapeHtml } from './latex.js?v=16';
+import { highlight } from './latex-highlight.js?v=5';
 import { state, ui, areas, NARROW_SCREEN, LINE_HEIGHT, getProblems } from './state.js?v=2';
-import { updateHistoryButtons, addHistoryStep } from './history.js?v=4';
-import { startPreviewTimer, showCodeElement, RENDER_DELAY, TEMPLATE_NAME } from './preview.js?v=4';
-import { startSaveTimer } from './storage.js?v=4';
+import { updateHistoryButtons, addHistoryStep } from './history.js?v=5';
+import { startPreviewTimer, showCodeElement, RENDER_DELAY } from './preview.js?v=5';
+import { startSaveTimer } from './storage.js?v=5';
 
 /** Code longer than this is shown without highlighting. */
 const MAX_HIGHLIGHT_LENGTH = 600000;
@@ -42,7 +42,7 @@ let characterWidth = 0;
  */
 export function renderCode() {
     const code = state.code;
-    ui.hl.innerHTML = code.length < MAX_HIGHLIGHT_LENGTH ? highlight(code, TEMPLATE_NAME) + '\n' : escapeHtml(code) + '\n';
+    ui.hl.innerHTML = code.length < MAX_HIGHLIGHT_LENGTH ? highlight(code) + '\n' : escapeHtml(code) + '\n';
     renderProblemMarks();
     const lines = code.split('\n').length;
     areas.lineWrap.update(code);

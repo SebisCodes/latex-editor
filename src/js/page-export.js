@@ -5,7 +5,7 @@
  * they look the same without the editor.
  */
 
-import { escapeHtml } from './latex.js?v=15';
+import { escapeHtml } from './latex.js?v=16';
 
 /** The stylesheets with their folders, relative to src/. */
 const STYLESHEETS = [['css/page.css', 'css/'], ['vendor/katex/katex.min.css', 'vendor/katex/']];

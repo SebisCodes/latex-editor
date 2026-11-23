@@ -2,27 +2,28 @@
  * The pages of the preview, rendered from the code.
  *
  * renderPreview() runs these steps:
- *   1. render the code to blocks (latex.js); an unexpected error becomes a page with the message;
+ *   1. render the code to blocks (latex.js; with a template syntax the view chosen,
+ *      preview-views.js); an unexpected error becomes a page with the message;
  *   2. lay the blocks out on pages (viewer.js) in a hidden copy at 100 % and show them at the
  *      current zoom, the scroll position kept;
  *   3. collect the elements that carry their place in the code (data-p), sorted by place;
  *   4. draw the page label, the problems, the code view, the Pictures tab (when it is open),
- *      the outline and the document settings again, and frame the element at the cursor.
+ *      the outline, the document settings and the template's controls again, and frame the
+ *      element at the cursor.
  */
 
-import { render, escapeHtml } from './latex.js?v=15';
-import { renderPages } from './viewer.js?v=13';
+import { render, escapeHtml } from './latex.js?v=16';
+import { renderDocument, getExportResult } from './preview-views.js?v=1';
+import { renderTemplateControls } from './template-panel.js?v=1';
+import { renderPages } from './viewer.js?v=14';
 import { state, ui, getElements } from './state.js?v=2';
-import { renderCode } from './code-view.js?v=4';
-import { showZoom, updatePageLabel } from './zoom.js?v=4';
-import { renderProblems } from './problems.js?v=4';
-import { renderPicturesTab } from './pictures-tab.js?v=4';
-import { renderOutline } from './outline.js?v=4';
-import { renderSettingsPanel } from './settings-panel.js?v=4';
-import { getTemplateNameByAddress } from './latex-template.js?v=1';
+import { renderCode } from './code-view.js?v=5';
+import { showZoom, updatePageLabel } from './zoom.js?v=5';
+import { renderProblems } from './problems.js?v=5';
+import { renderPicturesTab } from './pictures-tab.js?v=5';
+import { renderOutline } from './outline.js?v=5';
+import { renderSettingsPanel } from './settings-panel.js?v=5';
 
-/** The template syntax of the placeholders the page asked for with ?template= in the address, or null. */
-export const TEMPLATE_NAME = getTemplateNameByAddress(location.search);
 /** How long the pages wait after typing before they are rendered, in milliseconds. */
 export const RENDER_DELAY = 280;
 /** How long the pages wait for more fonts before they are laid out again, in milliseconds. */
@@ -35,6 +36,10 @@ const MARK_TOP_MARGIN = 20;
 const MARK_BOTTOM_MARGIN = 40;
 /** The hidden copy of the pages at 100 %, where the blocks are measured. */
 let measureBox = null;
+/** The hidden pages of the template as written, for the exports while the example view is shown. */
+let exportBox = null;
+/** The last pages laid out for the exports, with the reading they come from. */
+let exportPages = { result: null, pages: [] };
 let renderTimer = 0;
 let fontsTimer = 0;
 
@@ -67,6 +72,7 @@ export function renderPreview() {
     if (!ui.pictures.hidden) renderPicturesTab();
     renderOutline();
     renderSettingsPanel();
+    renderTemplateControls();
     showCodeElement(false);
 }
 
@@ -77,12 +83,24 @@ export function renderPreview() {
  */
 function getRenderResult() {
     try {
-        return render(state.code, { assets: state.assets, template: TEMPLATE_NAME });
+        return renderDocument(state.code, state.assets);
     } catch (error) {
         console.error(error);
         const meta = render('').meta;
         return { blocks: [{ html: `<div class="p ni">The preview stopped at an unexpected problem: ${escapeHtml(error.message)}</div>`, pos: 0 }], meta, outline: [], labels: {}, problems: [{ pos: 0, kind: 'error', msg: 'The preview failed: ' + error.message }] };
     }
+}
+
+/**
+ * Returns what the exports of the code and what is made of it (HTML, text, page pictures) use: the
+ * template as written while the pages show a template's example view, else the pages shown.
+ * @returns {{pages: HTMLElement[], result: import('./latex.js').RenderResult}} the pages and the reading they come from.
+ */
+export function getExportPages() {
+    const result = getExportResult();
+    if (!result) return { pages: state.pages, result: state.result };
+    if (exportPages.result !== result) exportPages = { result, pages: renderPages(result, exportBox).pages };
+    return exportPages;
 }
 
 /**
@@ -146,14 +164,16 @@ function showElementInView(element) {
 }
 
 /**
- * Creates the hidden copy of the pages where the blocks are measured.
+ * Creates the hidden copies of the pages: where the blocks are measured, and where the pages of
+ * the exports are laid out.
  * @returns {void}
  */
 export function startPreview() {
     measureBox = document.createElement('div');
     measureBox.className = 'measure';
     measureBox.setAttribute('aria-hidden', 'true');
-    document.body.append(measureBox);
+    exportBox = measureBox.cloneNode(false);
+    document.body.append(measureBox, exportBox);
 }
 
 /**

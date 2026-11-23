@@ -4,7 +4,7 @@
  */
 
 import { escapeHtml } from './latex-units.js?v=3';
-import { createScanner, getPosition, splitTopLevel, getItemLength, getBibitemLength, parseKeyValues, formatRoman, formatAlph } from './latex-scan.js?v=2';
+import { createScanner, getPosition, splitTopLevel, getItemLength, getBibitemLength, parseKeyValues, formatRoman, formatAlph } from './latex-scan.js?v=3';
 import { highlightListing } from './latex-listing.js?v=3';
 
 /** The renderer methods of this part, mixed into Renderer (latex.js). */
@@ -141,7 +141,7 @@ export const BLOCK_METHODS = {
         if (kv.has('scale')) st.push(`zoom:${parseFloat(kv.get('scale')) || 1}`);
         if (kv.has('angle')) st.push(`transform:rotate(${-parseFloat(kv.get('angle')) || 0}deg)`);
         if (!w && !h && !kv.has('scale')) st.push('max-width:100%');
-        const src = doc.getImageSource(file, pos);
+        const src = doc.getImageSource(file, pos, this.getSourceRange(scan, r));
         const style = st.length ? ` style="${st.join(';')}"` : '';
         if (src === 'example') {
             const letter = (/-(a|b|c)\b/.exec(file) || [, 'a'])[1].toUpperCase();

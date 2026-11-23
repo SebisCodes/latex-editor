@@ -35,6 +35,22 @@ your documents stay there unless you send them somewhere yourself.
    pieces for lists, tables, math and symbols.
 3. **Export**: save a PDF, pictures of the pages or the `.tex` file.
 
+## Side panel
+
+The side panel holds the document settings, Insert, Pictures and the Outline. The button at the top right of the work area opens it over the
+preview and closes it again (Escape too); it is closed when the editor opens. On a phone it is the
+view **Edit**.
+
+## Templates with placeholders
+
+A website that edits templates opens the editor with `?template=mustache` or `?template=angle`.
+The preview then shows the document filled with the website's examples; **Template** in the preview's
+bar shows the placeholders as written, **Examples** brings the examples back. A placeholder without
+an example shows its label in brackets. The **Placeholders** box below the code lists them: a click
+puts one at the cursor, a section around the selected text. Text that comes from an example cannot
+be edited in the preview. Saving, downloading and exporting the code keep the placeholders; print
+follows the view shown.
+
 ## Editing on the page
 
 Click text in the preview to edit it right there: the cursor is where you clicked, and the

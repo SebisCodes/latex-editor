@@ -47,6 +47,20 @@ def read(name):
         return f.read()
 
 
+
+def open_side_panel(page):
+    """Opens the side panel's drawer when it is closed (it is closed at the start).
+
+    Args:
+        page (Page): the editor's page or frame.
+
+    Returns:
+        None: the side panel is open.
+    """
+    button = page.locator('#btn-panel')
+    if button.count() and button.is_visible() and button.get_attribute('aria-expanded') != 'true':
+        button.click()
+
 def set_code(page, tex):
     """Sets the editor's code and waits for the preview.
 
@@ -451,6 +465,7 @@ with sync_playwright() as pw:
     page.wait_for_timeout(200)
 
     # --- Document settings rewrite the preamble ---
+    open_side_panel(page)
     page.select_option('#d-paper', 'sq')
     page.select_option('#d-font', 'helvet')
     page.select_option('#d-lang', 'de')

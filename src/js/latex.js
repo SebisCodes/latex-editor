@@ -23,22 +23,22 @@
  */
 
 import { escapeHtml, PAPERS, SIZE_NAMES, getCssLength } from './latex-units.js?v=3';
-import { SYMBOLS, ACCENTS, SPACES, ESCAPED, FONT_COMMANDS, FONT_DECLARATIONS, SECTION_LEVELS, SECTION_ORDER, MATH_ENVIRONMENTS } from './latex-names.js?v=2';
-import { LETTER, createScanner, getPosition, findClosingBrace, findClosingBracket, findEnvironmentEnd, formatRoman } from './latex-scan.js?v=2';
-import { Flow } from './latex-flow.js?v=2';
-import { TexDocument } from './latex-document.js?v=3';
+import { SYMBOLS, ACCENTS, SPACES, ESCAPED, FONT_COMMANDS, FONT_DECLARATIONS, SECTION_LEVELS, SECTION_ORDER, MATH_ENVIRONMENTS } from './latex-names.js?v=3';
+import { LETTER, createScanner, getPosition, findClosingBrace, findClosingBracket, findEnvironmentEnd, formatRoman } from './latex-scan.js?v=3';
+import { Flow } from './latex-flow.js?v=3';
+import { TexDocument } from './latex-document.js?v=4';
 import { SKIPPED_COMMANDS } from './latex-skipped-commands.js?v=2';
-import { MATH_METHODS } from './latex-math.js?v=4';
-import { TABLE_METHODS } from './latex-tables.js?v=3';
-import { BLOCK_METHODS } from './latex-blocks.js?v=3';
-import { ALGORITHM_METHODS } from './latex-algorithms.js?v=2';
-import { ENVIRONMENTS, ENVIRONMENT_METHODS } from './latex-environments.js?v=3';
-import { TEXT_COMMANDS } from './latex-commands.js?v=3';
-import { BOX_COMMANDS } from './latex-box-commands.js?v=3';
-import { PAGE_COMMANDS, PAGE_METHODS } from './latex-page-commands.js?v=3';
+import { MATH_METHODS } from './latex-math.js?v=5';
+import { TABLE_METHODS } from './latex-tables.js?v=4';
+import { BLOCK_METHODS } from './latex-blocks.js?v=4';
+import { ALGORITHM_METHODS } from './latex-algorithms.js?v=3';
+import { ENVIRONMENTS, ENVIRONMENT_METHODS } from './latex-environments.js?v=4';
+import { TEXT_COMMANDS } from './latex-commands.js?v=4';
+import { BOX_COMMANDS } from './latex-box-commands.js?v=4';
+import { PAGE_COMMANDS, PAGE_METHODS } from './latex-page-commands.js?v=4';
 import { DEFINITION_COMMANDS, DEFINITION_METHODS } from './latex-definitions.js?v=2';
-import { PREAMBLE_METHODS } from './latex-preamble.js?v=3';
-import { getTemplateSyntax, findTemplateTagAt, checkTemplateSections, formatTemplateTagLabel } from './latex-template.js?v=1';
+import { PREAMBLE_METHODS } from './latex-preamble.js?v=4';
+import { getTemplateSyntax, findTemplateTagAt, checkTemplateSections, hasTemplatePlaceholder } from './template-tags.js?v=1';
 
 export { escapeHtml, PAPERS };
 
@@ -157,6 +157,29 @@ class Renderer {
     getRawText(scan, range) { return range ? scan.s.slice(range.a, range.b) : ''; }
 
     /**
+     * Returns where a range of a scanner stands in the text read, when the scanner reads that
+     * text itself (not the text of a macro).
+     * @param {Scanner} scan - the scanner the range belongs to.
+     * @param {?Range} range - the range, or null.
+     * @returns {?{start: number, end: number}} the range in the text read, or null when unknown.
+     */
+    getSourceRange(scan, range) { return range && scan.v < 0 && scan.s === this.doc.src ? { start: range.a, end: range.b } : null; }
+
+    /**
+     * Tells whether a link's address may be linked: not when it holds a placeholder (with or without
+     * a template syntax), nor in the example view of a template when it holds filled text or its
+     * place is not known.
+     * @param {Scanner} scan - the scanner the address belongs to.
+     * @param {?Range} range - the address's range.
+     * @returns {boolean} true when the address may be linked.
+     */
+    isAddressLinkable(scan, range) {
+        if (hasTemplatePlaceholder(this.getRawText(scan, range))) return false;
+        const provenance = this.doc.provenance, source = this.getSourceRange(scan, range);
+        return !provenance || (Boolean(source) && provenance.isCopied(source.start, source.end));
+    }
+
+    /**
      * Reads the scanners on the flow's stack until all are done: comments, spaces and blank lines,
      * groups, math, special characters, commands and plain text. Plain text of the code itself goes
      * in as editable source text.
@@ -207,7 +230,8 @@ class Renderer {
             if (c === '\\') { this.renderCommand(flow, scan); continue; }
             // Plain text up to the next special character.
             let k = i;
-            while (k < scan.end && !'\\{}$%&~#^_ \t\n\r'.includes(s[k]) && !findTemplateTagAt(s, k, doc.templateSyntax)) k++;
+            const partStarts = doc.provenance && s === doc.src ? doc.provenance.partStarts : null;
+            while (k < scan.end && !'\\{}$%&~#^_ \t\n\r'.includes(s[k]) && !findTemplateTagAt(s, k, doc.templateSyntax) && !(partStarts && k > i && partStarts.has(k))) k++;
             if (k === i) k++;
             scan.i = k;
             const t = s.slice(i, k), shown = this.getShownText(t);
@@ -217,18 +241,17 @@ class Renderer {
     }
 
     /**
-     * Renders a template placeholder (a page's server replaces it before LaTeX runs) as one small
-     * box with its sign and name.
+     * Renders a template placeholder (a page's server replaces it before LaTeX runs) as its text
+     * as written, which leads to the tag in the code.
      * @param {Flow} flow - the flow to write into.
      * @param {Scanner} scan - the scanner at the tag; moved past it.
-     * @param {import('./latex-template.js').TemplateTag} tag - the tag.
+     * @param {import('./template-tags.js').TemplateTag} tag - the tag.
      * @returns {void}
      */
     renderTemplateTag(flow, scan, tag) {
         scan.i = tag.end;
         const pos = getPosition(scan, tag.start);
-        const className = tag.kind === 'value' ? 'template-tag' : 'template-tag template-section';
-        flow.addHtml(`<span class="${className}" data-p="${pos}">${escapeHtml(formatTemplateTagLabel(tag))}</span>`, pos);
+        flow.addHtml(`<span data-p="${pos}">${escapeHtml(scan.s.slice(tag.start, tag.end))}</span>`, pos);
     }
 
     /**

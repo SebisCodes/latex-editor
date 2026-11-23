@@ -3,19 +3,20 @@
  * (PNG, JPEG, WebP; one page or all, as a ZIP), one HTML file, plain text, the .tex, the .tex
  * with its pictures as a ZIP, or everything at once; copying the code or a format; downloading
  * the .tex (with its pictures as a ZIP); and Ctrl+S, which saves to the server or the page
- * around the editor when one is set up, else downloads.
+ * around the editor when one is set up, else downloads. With template placeholders, every format
+ * made of the code shows the template as written; PDF follows the view the preview shows.
  */
 
-import { getPlainText } from './latex.js?v=15';
-import { drawPageCanvas, getCanvasBlob, getStandaloneHtml } from './page-export.js?v=4';
+import { getPlainText } from './latex.js?v=16';
+import { drawPageCanvas, getCanvasBlob, getStandaloneHtml } from './page-export.js?v=5';
 import { createZip } from './zip.js?v=4';
 import { openDialog } from './dialogs.js?v=5';
 import { saveFile, getSafeName } from './util.js?v=3';
 import { state, ui, areas, getElement, showToast } from './state.js?v=2';
-import { renderPreview } from './preview.js?v=4';
-import { getPageSize, getCurrentPage } from './zoom.js?v=4';
-import { stopTextEdit } from './text-edit.js?v=4';
-import { getPagePictures, runPrint, createTexZip, createAllZip } from './export.js?v=4';
+import { renderPreview, getExportPages } from './preview.js?v=5';
+import { getPageSize, getCurrentPage } from './zoom.js?v=5';
+import { stopTextEdit } from './text-edit.js?v=5';
+import { getPagePictures, runPrint, createTexZip, createAllZip } from './export.js?v=5';
 
 /** The formats exported as page pictures. */
 const PICTURE_FORMATS = /^(png|jpeg|webp)$/;
@@ -65,12 +66,12 @@ function updateExportDialog() {
     dialog.dataset.raster = format === 'pdf' ? 'pdf' : String(picture);
     getElement('#ex-download').textContent = format === 'pdf' ? 'Print / Save as PDF' : 'Download';
     getElement('#ex-copy').hidden = format === 'pdf' || format === 'texzip';
-    const pageCount = state.pages.length;
+    const pageCount = format === 'pdf' ? state.pages.length : getExportPages().pages.length;
     if (picture) { showPictureSize(pageCount); return; }
     if (format === 'pdf') { fields.info.textContent = formatCount(pageCount, 'page', 'pages'); return; }
     if (format === 'texzip') { showZipFiles(); return; }
     if (format === 'html') { showHtmlFile(); return; }
-    const text = format === 'tex' ? state.code : getPlainText(state.result.blocks);
+    const text = format === 'tex' ? state.code : getPlainText(getExportPages().result.blocks);
     fields.text.value = text;
     fields.info.textContent = `${new Blob([text]).size.toLocaleString('en')} bytes`;
 }
@@ -104,7 +105,7 @@ function showZipFiles() {
 function showHtmlFile() {
     fields.text.value = '';
     fields.info.textContent = '';
-    getStandaloneHtml(state.pages, state.name, state.result.meta).then(html => {
+    getStandaloneHtml(getExportPages().pages, state.name, getExportPages().result.meta).then(html => {
         if (fields.format.value !== 'html') return;
         fields.text.value = html;
         fields.info.textContent = `${new Blob([html]).size.toLocaleString('en')} bytes`;
@@ -137,7 +138,7 @@ async function saveChosenFormat(format) {
         const pictures = await getPagePictures('image/' + format, fields.pages.value, +fields.scale.value, baseName);
         if (pictures.length === 1) saveFile(pictures[0].data, pictures[0].name);
         else saveFile(await createZip(pictures), `${getExportName()}-pages.zip`);
-    } else if (format === 'html') saveFile(await getStandaloneHtml(state.pages, state.name, state.result.meta), `${getExportName()}.html`, 'text/html');
+    } else if (format === 'html') saveFile(await getStandaloneHtml(getExportPages().pages, state.name, getExportPages().result.meta), `${getExportName()}.html`, 'text/html');
     else if (format === 'txt') saveFile(fields.text.value, `${baseName}.txt`, 'text/plain');
     else if (format === 'texzip') saveFile(await createTexZip(baseName), `${getExportName()}.zip`);
     else saveFile(state.code, `${baseName}.tex`, 'application/x-tex');
@@ -167,9 +168,10 @@ async function copyChosenFormat() {
     const format = fields.format.value;
     try {
         if (PICTURE_FORMATS.test(format)) {
-            const canvas = await drawPageCanvas(state.pages[getCurrentPage()], +fields.scale.value);
+            const pages = getExportPages().pages;
+            const canvas = await drawPageCanvas(pages[Math.min(getCurrentPage(), pages.length - 1)], +fields.scale.value);
             await navigator.clipboard.write([new ClipboardItem({ 'image/png': await getCanvasBlob(canvas, 'image/png') })]);
-        } else if (format === 'html') await navigator.clipboard.writeText(await getStandaloneHtml(state.pages, state.name, state.result.meta));
+        } else if (format === 'html') await navigator.clipboard.writeText(await getStandaloneHtml(getExportPages().pages, state.name, getExportPages().result.meta));
         else await navigator.clipboard.writeText(fields.text.value);
         showToast('Copied to the clipboard');
     } catch (error) {

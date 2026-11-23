@@ -81,6 +81,15 @@
  * The page may answer a key-request with { type: "<P>:ai", decline: true, message }: the wait
  * ends at once and the user sees "<host>: <message>" after copying the prompt.
  *
+ * Template placeholders: in an editor that offers them (ed.parseTemplate and ed.onTemplate), the
+ * page may send { type: "<P>:template", placeholders, assets } or the same object as the field
+ * `template` of "load"; { type: "<P>:template", clear: true } (or template: null) ends it. The
+ * editor checks it (ed.parseTemplate) and keeps it in memory for the host document only: a
+ * message replaces the one before, an older check that finishes late is dropped, a load's
+ * template comes in together with its document, and a load without the field keeps the
+ * template. The editor shows it while the host document is open (getTemplate()); when the
+ * opener is gone or the editor closes, it ends.
+ *
  * PDF: the page may send { type: "<P>:pdf", dpi } (72 to 300, default 200) and
  * gets { type: "<P>:pdf", id, name, pdf, pages } back: pdf is a data URI of a
  * PDF with one JPEG picture per page (its text cannot be selected), or
@@ -146,6 +155,24 @@ import { ANSWER_NONE } from './prompt-parts.js?v=1';
  * @property {function(): void} [onAiEnd] - the page's AI session ended ("clear", or the opener is gone).
  * @property {function(string): (string|Promise<string>)} [tidy] - the editor's Tidy / Format; code it cannot read comes back as it is.
  * @property {string} [viewerAllow] - selector of what stays usable in the viewer, e.g. the fold arrows of a tree.
+ * @property {function(object): Promise<TemplateExamples>} [parseTemplate] - checks the page's template placeholders
+ *   (the message or the `template` field of a load) and returns them in the editor's form.
+ * @property {function((TemplateExamples|null)): void} [onTemplate] - the template placeholders to show changed:
+ *   the host document's, or null.
+ */
+
+/**
+ * The template placeholders the editor made of a page's message; sync.js only keeps them and
+ * calls their close() when they end.
+ * @typedef {object} TemplateExamples
+ * @property {function(): void} close - lets go of what the examples hold (object addresses of pictures).
+ */
+
+/**
+ * The page's template placeholders as the session keeps them.
+ * @typedef {object} PageTemplate
+ * @property {TemplateExamples} examples - the checked placeholders.
+ * @property {string|null} hostId - the host document they belong to; null until the next load of the page.
  */
 
 /**
@@ -232,6 +259,8 @@ import { ANSWER_NONE } from './prompt-parts.js?v=1';
  * @property {Map<string, HookJob>} waitingJobs - saves waiting for the running request, by document and address.
  * @property {boolean} pdfBusy - true while a PDF is being made for the page.
  * @property {number} loadGeneration - counts the page's loads: an older one that finishes later is dropped.
+ * @property {PageTemplate|null} template - the page's template placeholders, or null.
+ * @property {number} templateRevision - counts the page's template messages and loads with a template: an older check that finishes later is dropped.
  * @property {boolean} closingSent - true once "closing" went to the opener.
  * @property {HTMLDialogElement} dialog - the "Save to server" dialog.
  * @property {HTMLButtonElement} saveButton - the Save button.
@@ -255,6 +284,8 @@ import { ANSWER_NONE } from './prompt-parts.js?v=1';
  * @property {boolean} fromAi - true for an AI's result.
  * @property {string} label - the page's name for messages.
  * @property {object|null} hook - the webhook the page sent with it.
+ * @property {?{revision: number, examples: Promise<(TemplateExamples|null)>}} template - the template the page sent with it
+ *   (examples null to end it), or null when the load keeps the template as it is.
  */
 
 /**
@@ -284,6 +315,7 @@ import { ANSWER_NONE } from './prompt-parts.js?v=1';
  * @property {function(): boolean} isHost - true when the host document is open.
  * @property {function(function(): void): void} handleAiClick - a press on the AI button: the page's own dialog when it shows one, else the editor's (the function given).
  * @property {function(): string} getKeyDecline - the page's text for a declined key-request ("<host>: <message>"), "" without.
+ * @property {function(): (TemplateExamples|null)} getTemplate - the page's template placeholders while the host document is open, else null.
  */
 
 /** True in the read-only viewer (?viewer=1). */
@@ -328,6 +360,8 @@ const BLOB_MEASURE_LENGTH = 10e6;
 const BYTES_PER_MB = 1e6;
 
 const MESSAGE_VERSION = 2;
+/** The message types a page may send; only one of them sets the page's origin. */
+const PAGE_MESSAGE_TYPES = new Set(['load', 'ai', 'ai-click', 'get', 'save', 'pdf', 'template']);
 const KEY_REQUEST_WAIT_MS = 5000;
 /** How long a press on the AI button waits for the page that shows its own AI dialog. */
 const AI_CLICK_WAIT_MS = 300;
@@ -736,6 +770,7 @@ export function createSync(ed) {
     connectSettingsDialog(sync);
     if (sync.trusted) addEventListener('keydown', event => sendReloadToPage(sync, event), true);
     if (sync.ownWindow) watchOpener(sync);
+    addEventListener('pagehide', event => { if (!event.persisted) clearPageTemplate(sync); });
     updateSyncUi(sync);
     openLinkedDocuments(sync);
     sendToPage(sync, { type: 'ready', version: MESSAGE_VERSION, editor: ed.editor, window: sync.ownWindow });
@@ -766,7 +801,7 @@ function createSyncSession(ed) {
         base: null, reported: '',
         hideSave: params.get('save') === '0',
         tidyAll: params.get('tidy') === '1',
-        waitingJobs: new Map(), pdfBusy: false, loadGeneration: 0, closingSent: false,
+        waitingJobs: new Map(), pdfBusy: false, loadGeneration: 0, template: null, templateRevision: 0, closingSent: false,
         dialog: document.getElementById('sync'),
         saveButton: document.getElementById('btn-save'),
         fields: null,
@@ -794,6 +829,7 @@ function createSyncApi(sync) {
         isHost: () => isHostOpen(sync),
         handleAiClick: openEditorDialog => handleAiClick(sync, openEditorDialog),
         getKeyDecline: () => sync.keyDecline,
+        getTemplate: () => getHostTemplate(sync),
     };
 }
 
@@ -1436,8 +1472,29 @@ function isPageMessage(sync, event) {
     if (!sync.peer || event.source !== sync.peer) return false;
     const message = event.data;
     if (!message || typeof message !== 'object' || typeof message.type !== 'string' || !message.type.startsWith(sync.prefix + ':')) return false;
+    if (!isKnownMessageType(sync, message.type.slice(sync.prefix.length + 1))) return false;
     if (!event.origin || event.origin === 'null') return false;                      // no answers to a page without a real origin
     return !(sync.parentOrigin && event.origin !== sync.parentOrigin);              // the page went elsewhere
+}
+
+/**
+ * Tells whether a page message has a type this editor answers; only such a message sets the
+ * page's origin.
+ * @param {SyncSession} sync - the session.
+ * @param {string} type - the type without the prefix.
+ * @returns {boolean} true for a known type ("template" only in an editor with template placeholders).
+ */
+function isKnownMessageType(sync, type) {
+    return PAGE_MESSAGE_TYPES.has(type) && (type !== 'template' || hasTemplateSupport(sync));
+}
+
+/**
+ * Tells whether the editor offers template placeholders.
+ * @param {SyncSession} sync - the session.
+ * @returns {boolean} true when the editor checks and shows a page's template.
+ */
+function hasTemplateSupport(sync) {
+    return typeof sync.ed.parseTemplate === 'function' && typeof sync.ed.onTemplate === 'function';
 }
 
 /**
@@ -1457,6 +1514,7 @@ function handlePageMessage(sync, event) {
     else if (type === 'get') sendHostDocument(sync);
     else if (type === 'save') { if (isHostOpen(sync)) saveDocument(sync); }
     else if (type === 'pdf') sendPdf(sync, message);
+    else if (type === 'template') receiveTemplate(sync, message);
 }
 
 /**
@@ -1489,7 +1547,8 @@ function importPageDocument(sync, message) {
     if (fromAi && message.target === 'new') { openAiDocument(sync, message, name, pictures, label); return; }
     const hook = getLoadHook(sync, message);
     if ('hook' in message || !fromAi) sync.pageHook = null;
-    importHostDocument(sync, { message, generation, name, pictures, fromAi, label, hook });
+    const template = getLoadTemplate(sync, message);
+    importHostDocument(sync, { message, generation, name, pictures, fromAi, label, hook, template });
 }
 
 /**
@@ -1587,11 +1646,13 @@ function showAiDocumentResult(sync, previousId, label) {
  * @returns {void}
  */
 function importHostDocument(sync, load) {
-    const { message, generation, name, pictures, fromAi } = load;
-    getLoadContent(sync, message.content, message)
-        .then(content => (generation === sync.loadGeneration
-            ? Promise.resolve(sync.ed.load({ name, content, assets: pictures, replaceAssets: sync.hasFiles && 'assets' in message && !fromAi, into: fromAi && sync.host ? sync.host.id : null, page: sync.parentOrigin, temp: true })).then(() => true)
-            : false))
+    const { message, generation, name, pictures, fromAi, template } = load;
+    Promise.all([getLoadContent(sync, message.content, message), template ? template.examples : null])
+        .then(([content, examples]) => {
+            if (generation !== sync.loadGeneration) { examples?.close(); return false; }
+            if (template) setTemplateIfCurrent(sync, template.revision, examples, null);
+            return Promise.resolve(sync.ed.load({ name, content, assets: pictures, replaceAssets: sync.hasFiles && 'assets' in message && !fromAi, into: fromAi && sync.host ? sync.host.id : null, page: sync.parentOrigin, temp: true })).then(() => true);
+        })
         .then(done => {
             if (done) applyHostLoad(sync, load);           // otherwise a newer load from the page came first
         });
@@ -1607,12 +1668,105 @@ function applyHostLoad(sync, load) {
     const { fromAi, label, hook } = load;
     setHostToCurrent(sync);
     const host = sync.host;
+    if (sync.template) { sync.template.hostId = host.id; sync.ed.onTemplate?.(getHostTemplate(sync)); }
     if (!fromAi) setBase(sync, host);                     // an AI result is not saved at the page yet
     if (hook) setPageHook(sync, host.id, hook);
     updateSyncUi(sync);
     sync.ed.onAi?.(getAiSettings(sync));
     if (fromAi) { sync.ed.toast(`The AI's result from ${label} is open - Undo takes it back`); sync.ed.onAiResult?.(); }
     sendToPage(sync, { type: 'loaded', id: host.id, name: host.name });
+}
+
+/* ---------- Template placeholders ---------- */
+
+/**
+ * Takes the page's template placeholders from a "<P>:template" message: checked by the editor,
+ * for the host document (or the next one the page loads); { clear: true } ends them. Only while
+ * the page is there.
+ * @param {SyncSession} sync - the session.
+ * @param {object} message - the template message.
+ * @returns {void}
+ */
+function receiveTemplate(sync, message) {
+    if (!isPeerThere(sync)) return;
+    const revision = ++sync.templateRevision;
+    if (message.clear === true) { setTemplate(sync, null); return; }
+    checkPageTemplate(sync, message).then(examples => setTemplateIfCurrent(sync, revision, examples, null));
+}
+
+/**
+ * Returns the template a load carries, on its way through the editor's check: an object sets
+ * it, null or { clear: true } ends it; a load without the field keeps the template.
+ * @param {SyncSession} sync - the session.
+ * @param {object} message - the load message.
+ * @returns {?{revision: number, examples: Promise<(TemplateExamples|null)>}} the template on its way, or null to keep the template.
+ */
+function getLoadTemplate(sync, message) {
+    if (!hasTemplateSupport(sync) || !('template' in message)) return null;
+    const template = message.template;
+    if (template !== null && typeof template !== 'object') return null;
+    const revision = ++sync.templateRevision;
+    return { revision, examples: template === null || template.clear === true ? Promise.resolve(null) : checkPageTemplate(sync, template) };
+}
+
+/**
+ * Has the editor check a page's template.
+ * @param {SyncSession} sync - the session.
+ * @param {object} template - the message or the `template` field.
+ * @returns {Promise<(TemplateExamples|null)>} the checked placeholders; null when the check failed.
+ */
+function checkPageTemplate(sync, template) {
+    return Promise.resolve().then(() => sync.ed.parseTemplate(template)).catch(() => null);
+}
+
+/**
+ * Takes checked placeholders when no newer message or load came meanwhile; an older result is
+ * let go of. Placeholders of a "<P>:template" message belong to the host document when their
+ * check finishes (the one a load finished meanwhile), else to the next load.
+ * @param {SyncSession} sync - the session.
+ * @param {number} revision - the revision of the message or load.
+ * @param {TemplateExamples|null} examples - the checked placeholders, or null to end them.
+ * @param {string|null} hostId - the host document they belong to; null for the host document of the moment (or the next load).
+ * @returns {void}
+ */
+function setTemplateIfCurrent(sync, revision, examples, hostId) {
+    if (revision !== sync.templateRevision) { examples?.close(); return; }
+    setTemplate(sync, examples ? { examples, hostId: hostId ?? (sync.host ? sync.host.id : null) } : null);
+}
+
+/**
+ * Ends the page's template placeholders with the page session: a check still on its way is
+ * dropped when it finishes.
+ * @param {SyncSession} sync - the session.
+ * @returns {void}
+ */
+function clearPageTemplate(sync) {
+    sync.templateRevision++;
+    setTemplate(sync, null);
+}
+
+/**
+ * Sets the page's template placeholders, lets go of the ones before and tells the editor.
+ * @param {SyncSession} sync - the session.
+ * @param {PageTemplate|null} template - the new template, or null to end it.
+ * @returns {void}
+ */
+function setTemplate(sync, template) {
+    const previous = sync.template;
+    if (!previous && !template) return;
+    sync.template = template;
+    if (previous && previous.examples !== template?.examples) previous.examples.close();
+    if (hasTemplateSupport(sync)) sync.ed.onTemplate(getHostTemplate(sync));
+}
+
+/**
+ * Returns the page's template placeholders while the host document they belong to is open.
+ * @param {SyncSession} sync - the session.
+ * @returns {TemplateExamples|null} the placeholders, or null.
+ */
+function getHostTemplate(sync) {
+    const template = sync.template;
+    return template && template.hostId !== null && isHostOpen(sync) && template.hostId === sync.host.id ? template.examples : null;
 }
 
 /**
@@ -1961,7 +2115,7 @@ function sendClosing(sync) {
 }
 
 /**
- * Ends the page's AI settings and webhook when the opener is closed. (A page that went to another
+ * Ends the page's AI settings, webhook and template placeholders when the opener is closed. (A page that went to another
  * site cannot be told apart from it: messages to it are dropped by its origin, and the page's
  * server ends the key.)
  * @param {SyncSession} sync - the session.
@@ -1970,5 +2124,6 @@ function sendClosing(sync) {
 function stopPageSessionWithoutOpener(sync) {
     if (isPeerThere(sync)) return;
     if (sync.remote || sync.remoteState) setRemote(sync, null);
+    clearPageTemplate(sync);
     if (sync.pageHook && sync.pageHook.page) { sync.pageHook = null; sync.status = ''; updateSyncUi(sync); }
 }

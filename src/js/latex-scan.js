@@ -4,7 +4,7 @@
  * key=value lists and the counter formats (roman, alph, footnote symbols).
  */
 
-import { VERBATIM_ENVIRONMENTS } from './latex-names.js?v=2';
+import { VERBATIM_ENVIRONMENTS } from './latex-names.js?v=3';
 
 /** A letter of a control word (TeX letters and @). */
 export const LETTER = /[A-Za-z@]/;

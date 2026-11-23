@@ -12,10 +12,10 @@
  */
 
 import { state, ui, NARROW_SCREEN, showToast } from './state.js?v=2';
-import { setCode, addTypingStep } from './history.js?v=4';
-import { showCodePosition } from './code-view.js?v=4';
-import { showCodeElement } from './preview.js?v=4';
-import { showPane } from './layout.js?v=4';
+import { setCode, addTypingStep } from './history.js?v=5';
+import { showCodePosition } from './code-view.js?v=5';
+import { showCodeElement } from './preview.js?v=5';
+import { showPane } from './layout.js?v=5';
 import { getRangeAtPoint, getCaretOffset, findRunAt } from './preview-caret.js?v=2';
 import { formatAsTex, isRunInCode, formatBreaks, getBreakRefusal, isInHeading, formatAfterHeading } from './text-breaks.js?v=2';
 

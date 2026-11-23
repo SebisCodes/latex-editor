@@ -7,10 +7,11 @@
 
 import { store } from './files.js?v=11';
 import { state, ui, areas } from './state.js?v=2';
-import { setCode } from './history.js?v=4';
-import { getLineIndex, getLineStartPlace, showCodePosition } from './code-view.js?v=4';
-import { showCodeElement } from './preview.js?v=4';
-import { openDocument, openNewDocument, createBlankDocument } from './documents.js?v=4';
+import { setCode } from './history.js?v=5';
+import { getLineIndex, getLineStartPlace, showCodePosition } from './code-view.js?v=5';
+import { showCodeElement } from './preview.js?v=5';
+import { openDocument, openNewDocument, createBlankDocument } from './documents.js?v=5';
+import { getCodeResult } from './preview-views.js?v=1';
 
 const AI_DOCUMENT_NAME = 'AI document';
 const END_DOCUMENT = '\\end{document}';
@@ -41,7 +42,7 @@ export function getProblemList() {
  * @returns {Array<object>} the outline entries with their 1-based line.
  */
 export function getSectionList() {
-    return (state.result?.outline || []).map(section => ({ ...section, line: getLineIndex(section.pos) + 1 }));
+    return (getCodeResult()?.outline || []).map(section => ({ ...section, line: getLineIndex(section.pos) + 1 }));
 }
 
 /**
@@ -85,7 +86,7 @@ function getInsertPlace(where) {
         const documentEnd = state.code.lastIndexOf(END_DOCUMENT);
         return documentEnd < 0 ? state.code.length : documentEnd;
     }
-    const section = (state.result?.outline || []).find(entry => entry.title.trim().toLowerCase() === where.trim().toLowerCase());
+    const section = (getCodeResult()?.outline || []).find(entry => entry.title.trim().toLowerCase() === where.trim().toLowerCase());
     if (!section) return -1;
     const lineEnd = state.code.indexOf('\n', section.pos);
     return lineEnd < 0 ? state.code.length : lineEnd + 1;

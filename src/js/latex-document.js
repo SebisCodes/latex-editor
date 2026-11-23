@@ -7,8 +7,9 @@
  * read, with the typedefs the reader shares; splitting it further would scatter one topic.
  */
 
+import { hasTemplatePlaceholder, buildTemplatePicture } from './template-tags.js?v=1';
 import { POINT_PX, MILLIMETER_PX, DEFAULT_TEXT_WIDTH_PT, PAPERS, SIZE_NAMES, SIZE_POINTS, TEXT_WIDTH_PT, getCssLength, getColorValue } from './latex-units.js?v=3';
-import { parseKeyValues } from './latex-scan.js?v=2';
+import { parseKeyValues } from './latex-scan.js?v=3';
 
 /** At most this many problems are kept per pass. */
 const PROBLEM_LIMIT = 200;
@@ -83,6 +84,15 @@ const KOMA_BOTTOM_FACTOR = 0.7;
  * @property {?Object<string, string>} [assets] - the pictures of the document, data URIs by name.
  * @property {?PreviousPass} [prev] - the result of the first pass, for the second.
  * @property {?string} [template] - the template syntax of the placeholders ("mustache", "angle"), or null for plain LaTeX.
+ * @property {?import('./latex-examples.js').ViewProvenance} [provenance] - for the example view of a template: what the
+ *     parts of the filled text are, so an address with filled text loads nothing.
+ */
+
+/**
+ * Where a piece stands in the text read.
+ * @typedef {object} SourceRange
+ * @property {number} start - where it starts.
+ * @property {number} end - where it ends.
  */
 
 /**
@@ -126,6 +136,7 @@ export class TexDocument {
         this.opts = options;
         this.assets = options.assets || {};
         this.prev = options.prev || null;
+        this.provenance = options.provenance || null;
         this.macros = new Map();
         this.envs = new Map();
         this.theorems = new Map();
@@ -237,15 +248,24 @@ export class TexDocument {
     /**
      * Resolves the picture of an \includegraphics: a data URI or https address as it is, else a
      * picture of the document by name (with or without extension and folder). A missing
-     * picture is reported once (the reader collects problems as it reads).
+     * picture is reported once (the reader collects problems as it reads). An https address that
+     * holds a placeholder, and with a template syntax any name that holds one, is shown as a
+     * placeholder picture and loads nothing. In the example view of a template, a name that is
+     * exactly an example picture's fill shows that picture from memory, and an address that holds
+     * filled text (or whose place is not known) is shown as a placeholder picture and loads nothing.
      * @param {string} name - the file name as written.
      * @param {number} position - the offset in the code, for the problem.
+     * @param {?SourceRange} [range=null] - where the name stands in the text read, null when unknown (text of a macro).
      * @returns {?string} the picture's address, "example" for the example-image pictures of
      *     mwe, or null when missing.
      */
-    getImageSource(name, position) {
+    getImageSource(name, position, range = null) {
         const fileName = String(name).trim();
+        const provenance = this.provenance;
+        if (provenance && range && provenance.getExamplePicture(range.start, range.end)) return provenance.getExamplePicture(range.start, range.end);
+        if (provenance && /^(https?:|data:|\/\/)/i.test(fileName) && !(range && provenance.isCopied(range.start, range.end))) return buildTemplatePicture(fileName);
         if (/^data:image\/(png|jpe?g|gif|webp|svg\+xml);/i.test(fileName)) return fileName;
+        if (hasTemplatePlaceholder(fileName) && (this.templateSyntax || /^https:\/\//i.test(fileName))) return buildTemplatePicture(fileName);
         if (/^https:\/\//i.test(fileName)) return fileName;
         const pictures = this.assets;
         const wanted = fileName.replace(/^\.\//, '');

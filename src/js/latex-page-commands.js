@@ -7,7 +7,7 @@
  */
 
 import { escapeHtml, getCssLength, ONE_HALF_SPACING, DOUBLE_SPACING } from './latex-units.js?v=3';
-import { parseKeyValues, formatRoman, formatAlph } from './latex-scan.js?v=2';
+import { parseKeyValues, formatRoman, formatAlph } from './latex-scan.js?v=3';
 
 /** The siunitx unit and prefix commands and their symbols. */
 const SI_UNIT_SYMBOLS = { metre: 'm', meter: 'm', second: 's', kilogram: 'kg', gram: 'g', ampere: 'A', kelvin: 'K', mole: 'mol', candela: 'cd',
@@ -518,7 +518,7 @@ export const PAGE_METHODS = {
     },
 
     /**
-     * Sets \parindent, \parskip or \tabcolsep from \setlength.
+     * Sets \parindent, \parskip, \tabcolsep, or \LTleft and \LTright (where longtables stand) from \setlength.
      * @this {Renderer}
      * @param {Flow} flow - the flow to write into.
      * @param {Scanner} scan - the scanner, after the command name.
@@ -535,6 +535,7 @@ export const PAGE_METHODS = {
         if (what === '\\parindent') { m.parindent = l; if (parseFloat(l) === 0) m.noIndent = true; }
         else if (what === '\\parskip') { m.parskipLen = l; }
         else if (what === '\\tabcolsep') m.tabcolsep = l;
+        else if (what === '\\LTleft' || what === '\\LTright') this.doc.longtableMargins = { ...this.doc.longtableMargins, [what.slice(1)]: v.trim() };
         else if (what === '\\arraystretch') { /* via renewcommand */ }
     },
 

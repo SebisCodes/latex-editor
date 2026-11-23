@@ -68,7 +68,7 @@ export const KNOWN_PACKAGES = new Set(('inputenc fontenc babel ngerman german po
     'graphicx graphics xcolor color geometry hyperref url tabularx array booktabs multirow multicol enumitem ' +
     'listings minted verbatim fancyvrb float caption subcaption subfig wrapfig parskip setspace microtype csquotes ' +
     'ulem soul textcomp eurosym siunitx algorithm2e algorithm algorithmic algpseudocode xspace lipsum blindtext ' +
-    'helvet times mathptmx palatino mathpazo libertine fourier titlesec fancyhdr lastpage calc ifthen etoolbox ' +
+    'helvet tgheros times mathptmx palatino mathpazo libertine fourier titlesec fancyhdr lastpage calc ifthen etoolbox ' +
     'framed mdframed tcolorbox longtable tabu ragged2e changepage pdfpages marvosym pifont wasysym fontawesome ' +
     'fontawesome5 bm upgreek cancel xparse kpfonts sectsty footmisc nameref cleveref varioref ae datetime scrextend ' +
     'dsfont bbm stmaryrd physics dcolumn colortbl xltabular threeparttable makecell hhline fp tikz pgf').split(' '));

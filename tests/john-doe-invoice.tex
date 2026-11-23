@@ -1,0 +1,49 @@
+% An invoice template: the server fills the placeholders. Example values: John Doe, 1 Main Street, 8000 Springfield.
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[scale=0.92]{tgheros}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[a4paper,margin=22mm]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{colortbl}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\definecolor{brand}{HTML}{1F4E79}
+\definecolor{rule}{HTML}{9DB4CC}
+\arrayrulecolor{rule}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+\begin{document}
+{\color{brand}\fontsize{20}{24}\selectfont\textbf{Invoice {{invoiceNumber}}}}
+
+\bigskip
+{{name}}\\
+{{street}}\\
+{{postalCode}} {{city}}
+
+\bigskip
+\begin{tabularx}{\textwidth}{Xr}
+Date: {{date}} & Customer number: {{customerNumber}}\\
+\end{tabularx}
+
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\begin{longtable}{@{}p{8cm}rrr@{}}
+\toprule
+\textbf{Item} & \textbf{Quantity} & \textbf{Price} & \textbf{Amount}\\
+\midrule
+\endhead
+{{#items}}
+{{label}} & {{quantity}} & {{price}} & {{amount}}\\
+{{/items}}
+\midrule
+\arrayrulecolor{brand}
+\multicolumn{3}{@{}l}{\textbf{Total}} & \textbf{{{total}}}\\
+\bottomrule
+\end{longtable}
+
+\vfill
+{\color{brand}\small Thank you for your order.}
+\end{document}

@@ -11,8 +11,8 @@
  * Start-up steps:
  *   1. the interface language (the AI prompt stays English) and the line wrap of the code;
  *   2. connect the code view, the pages, the side panel, the documents, opening files, the
- *      keyboard, the layout, the Export dialog and the dialogs, in the order their listeners
- *      take events;
+ *      keyboard, the layout, the Export dialog, the dialogs and the controls of template
+ *      placeholders, in the order their listeners take events;
  *   3. take the stored settings and open the last document (or the welcome example);
  *   4. draw the code, and the pages once the fonts and the document's pictures are there;
  *   5. start the AI Assistant, the WebMCP tools, the AI status, "Open in another editor" and
@@ -31,32 +31,35 @@ import { store } from './files.js?v=11';
 import { assets } from './assets.js?v=6';
 import { createAi } from './ai.js?v=17';
 import { createMcp } from './mcp.js?v=6';
-import { formatLatex } from './latex-tidy.js?v=2';
-import { drawPageCanvas } from './page-export.js?v=4';
+import { formatLatex } from './latex-tidy.js?v=3';
+import { drawPageCanvas } from './page-export.js?v=5';
 import { state, ui, areas, PREFIX, getElement, showToast } from './state.js?v=2';
-import { getSettings, startStorageSync } from './storage.js?v=4';
-import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=4';
-import { setCode, addHistoryStep, undo, redo } from './history.js?v=4';
-import { renderPreview, startPreview, startFontsWatch } from './preview.js?v=4';
-import { setZoom, showPage, startZoom } from './zoom.js?v=4';
-import { startPageClicks, startTextEditing } from './text-edit.js?v=4';
-import { startPictureMoving } from './picture-move.js?v=4';
-import { startProblems } from './problems.js?v=4';
-import { startTyping } from './typing.js?v=4';
-import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=4';
-import { startPicturesTab } from './pictures-tab.js?v=4';
-import { startSettingsPanel } from './settings-panel.js?v=4';
-import { startOutline } from './outline.js?v=4';
-import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=4';
-import { showFilePicker, startFileImport } from './file-import.js?v=4';
-import { startKeyboard } from './keyboard.js?v=4';
-import { showSplit, startLayout, startDialogs } from './layout.js?v=4';
-import { startExportDialog } from './export-dialog.js?v=4';
-import { createPicturePdf } from './export.js?v=4';
+import { getSettings, startStorageSync } from './storage.js?v=5';
+import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=5';
+import { setCode, addHistoryStep, undo, redo } from './history.js?v=5';
+import { renderPreview, startPreview, startFontsWatch, getExportPages, startPreviewTimer } from './preview.js?v=5';
+import { setZoom, showPage, startZoom } from './zoom.js?v=5';
+import { startPageClicks, startTextEditing } from './text-edit.js?v=5';
+import { startPictureMoving } from './picture-move.js?v=5';
+import { startProblems } from './problems.js?v=5';
+import { startTyping } from './typing.js?v=5';
+import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=5';
+import { startPicturesTab } from './pictures-tab.js?v=5';
+import { startSettingsPanel } from './settings-panel.js?v=5';
+import { startOutline } from './outline.js?v=5';
+import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=5';
+import { showFilePicker, startFileImport } from './file-import.js?v=5';
+import { startKeyboard } from './keyboard.js?v=5';
+import { showSplit, startLayout, startDialogs } from './layout.js?v=5';
+import { startExportDialog } from './export-dialog.js?v=5';
+import { startTemplateControls } from './template-panel.js?v=1';
+import { createTemplateExamples } from './template-examples.js?v=1';
+import { createPicturePdf, runPrint } from './export.js?v=5';
+import { getPlainText } from './latex.js?v=16';
 import { receiveDocument, importExternalDocument } from './incoming.js?v=5';
 import {
     getPromptState, getProblemList, getSectionList, getFileList, openFileByName, createFile, addLatex, updateText, showLine,
-} from './agent-api.js?v=4';
+} from './agent-api.js?v=5';
 
 /** The fonts of the pages, loaded before the first pages are laid out. */
 const PAGE_FONTS = ['400 16px "LM Roman"', '700 16px "LM Roman"', 'italic 400 16px "LM Roman"', '400 16px "LM Mono"', '400 16px "LM Sans"', '700 16px "LM Sans"'];
@@ -127,6 +130,7 @@ function connectAreas() {
     startLayout();
     startExportDialog();
     startDialogs();
+    startTemplateControls();
 }
 
 /**
@@ -278,6 +282,8 @@ function createSyncEditor() {
         setHookFor: (id, hook) => { try { store.setEntryFields(id, { hook }); } catch (e) { showToast('The browser storage is full'); } },
         onAi: () => areas.ai?.updateRemote(),
         pdf: createPicturePdf,
+        parseTemplate: message => createTemplateExamples(message),
+        onTemplate: () => startPreviewTimer(),
     };
 }
 
@@ -288,7 +294,7 @@ function createSyncEditor() {
 function createTestHook() {
     return {
         state, store, assets, setCode, undo, redo, renderPreview, zoomTo: setZoom, goPage: showPage, receive: receiveDocument,
-        revealInCode: showCodePosition, sync: () => areas.sync,
+        revealInCode: showCodePosition, sync: () => areas.sync, print: runPrint, templateText: () => getPlainText(getExportPages().result.blocks),
         pagePng: (index = 0, scale = TEST_PICTURE_SCALE) => drawPageCanvas(state.pages[index], scale).then(canvas => canvas.toDataURL()),
     };
 }

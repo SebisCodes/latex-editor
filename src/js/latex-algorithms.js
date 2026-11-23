@@ -3,7 +3,7 @@
  * (\State, \If … \EndIf …), drawn as indented lines with bold keywords.
  */
 
-import { LETTER, createScanner, getPosition, findClosingBrace, findClosingBracket } from './latex-scan.js?v=2';
+import { LETTER, createScanner, getPosition, findClosingBrace, findClosingBracket } from './latex-scan.js?v=3';
 
 /**
  * Returns a keyword of an algorithm in bold.

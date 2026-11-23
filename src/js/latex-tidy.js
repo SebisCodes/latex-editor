@@ -11,7 +11,7 @@
  * twice changes nothing.
  */
 
-import { VERBATIM_ENVIRONMENTS } from './latex-names.js?v=2';
+import { VERBATIM_ENVIRONMENTS } from './latex-names.js?v=3';
 
 /** Commands that start a line of their own when tidying (group 1: the environment name). */
 const OWN_LINE_COMMANDS = /\\(?:begin|end)\s*\{([^}]*)\}|\\(?:item|part|chapter|section|subsection|subsubsection|paragraph|subparagraph|documentclass|usepackage|maketitle|tableofcontents)(?![A-Za-z])/g;

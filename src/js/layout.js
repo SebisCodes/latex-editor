@@ -1,15 +1,15 @@
 /**
  * The layout of the editor: the splitter between code and pages (dragged or moved with the
- * arrow keys, remembered), the tabs of the side panel, the views of narrow screens, and the
- * closing of dialogs.
+ * arrow keys, remembered), the side panel (a drawer on the desktop, closed at the start) and its
+ * tabs, the views of narrow screens, and the closing of dialogs.
  */
 
 import { openDialog } from './dialogs.js?v=5';
 import { state, ui, getElement, getElements, getNumberInRange } from './state.js?v=2';
-import { saveState } from './storage.js?v=4';
-import { moveCodeLayers } from './code-view.js?v=4';
-import { showZoom } from './zoom.js?v=4';
-import { renderPicturesTab } from './pictures-tab.js?v=4';
+import { saveState } from './storage.js?v=5';
+import { moveCodeLayers } from './code-view.js?v=5';
+import { showZoom } from './zoom.js?v=5';
+import { renderPicturesTab } from './pictures-tab.js?v=5';
 
 /** The smallest and largest share of the width the code takes. */
 const MIN_SPLIT = 0.15;
@@ -52,7 +52,29 @@ function showPanelTab(tab) {
 }
 
 /**
- * Connects the splitter, the view buttons of narrow screens and the panel tabs.
+ * Opens or closes the side panel's drawer.
+ * @param {boolean} isOpen - true to open it.
+ * @returns {void}
+ */
+export function showSidePanel(isOpen) {
+    ui.work.dataset.panel = isOpen ? 'open' : 'closed';
+    getElement('#btn-panel').setAttribute('aria-expanded', String(isOpen));
+}
+
+/**
+ * Closes the side panel's drawer with Escape inside it and puts the focus on its button.
+ * @param {KeyboardEvent} event - the key in the side panel.
+ * @returns {void}
+ */
+function closeSidePanelOnEscape(event) {
+    if (event.key !== 'Escape' || ui.work.dataset.panel !== 'open' || event.target.closest('dialog')) return;
+    showSidePanel(false);
+    getElement('#btn-panel').focus();
+}
+
+/**
+ * Connects the splitter, the view buttons of narrow screens, the side panel's button and the
+ * panel tabs.
  * @returns {void}
  */
 export function startLayout() {
@@ -61,6 +83,9 @@ export function startLayout() {
     splitter.addEventListener('keydown', moveSplitOnKey);
     getElements('[data-pane]').forEach(button => button.addEventListener('click', () => showPane(button.dataset.pane)));
     getElements('[data-itab]').forEach(button => button.addEventListener('click', () => showPanelTab(button)));
+    showSidePanel(false);
+    getElement('#btn-panel').addEventListener('click', () => showSidePanel(ui.work.dataset.panel !== 'open'));
+    getElement('#side-panel').addEventListener('keydown', closeSidePanelOnEscape);
 }
 
 /**
@@ -84,7 +109,7 @@ function moveSplitOnKey(event) {
 function moveSplitterWithPointer(splitter, event) {
     splitter.setPointerCapture(event.pointerId);
     const area = ui.work.getBoundingClientRect();
-    const available = area.width - getElement('.inspector').offsetWidth - splitter.offsetWidth;
+    const available = area.width - splitter.offsetWidth;
     /**
      * Sets the split to the pointer's place.
      * @param {PointerEvent} moveEvent - the pointermove.

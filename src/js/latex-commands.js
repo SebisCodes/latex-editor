@@ -8,7 +8,7 @@
  */
 
 import { escapeHtml, getModelColor } from './latex-units.js?v=3';
-import { getFootnoteSymbol } from './latex-scan.js?v=2';
+import { getFootnoteSymbol } from './latex-scan.js?v=3';
 
 /** @type {Object<string, CommandHandler>} */
 export const TEXT_COMMANDS = {
@@ -337,6 +337,15 @@ export const TEXT_COMMANDS = {
         if (v) this.doc.colors[n] = v.slice(1);
     },
     /**
+     * \arrayrulecolor (colortbl, xcolor with the option table): the color of the rules of the
+     * tables that follow, in the preamble and in the body; inside a table it colors the rules after it.
+     * @param {Flow} flow - the flow to write into.
+     * @param {Scanner} scan - the scanner after the command name.
+     * @param {number} pos - the offset of the command in the code.
+     * @returns {void}
+     */
+    arrayrulecolor(flow, scan, pos) { this.readRuleColor(scan, pos); },
+    /**
      * \href: a link; only http, https, mailto, tel and # addresses are taken, any other links to "#".
      * @param {Flow} flow - the flow to write into.
      * @param {Scanner} scan - the scanner after the command name.
@@ -344,9 +353,10 @@ export const TEXT_COMMANDS = {
      * @returns {void}
      */
     href(flow, scan, pos) {
-        const u = this.getRawText(scan, this.readArgument(scan, 'href')).trim().replace(/\\([#%&_~])/g, '$1');
+        const address = this.readArgument(scan, 'href');
+        const u = this.getRawText(scan, address).trim().replace(/\\([#%&_~])/g, '$1');
         const t = this.readArgument(scan, 'href');
-        const safe = /^(https?:|mailto:|tel:|#)/i.test(u) ? u : '#';
+        const safe = /^(https?:|mailto:|tel:|#)/i.test(u) && this.isAddressLinkable(scan, address) ? u : '#';
         flow.addHtml(`<a href="${escapeHtml(safe)}" target="_blank" rel="noopener">${this.renderInline(scan, t)}</a>`, pos);
     },
     /**
@@ -357,8 +367,10 @@ export const TEXT_COMMANDS = {
      * @returns {void}
      */
     url(flow, scan, pos) {
-        const u = this.getRawText(scan, this.readArgument(scan, 'url')).trim();
-        const safe = /^(https?:|mailto:)/i.test(u) ? u : /^www\./i.test(u) ? 'https://' + u : '#';
+        const address = this.readArgument(scan, 'url');
+        const u = this.getRawText(scan, address).trim();
+        const linked = /^(https?:|mailto:)/i.test(u) ? u : /^www\./i.test(u) ? 'https://' + u : '#';
+        const safe = this.isAddressLinkable(scan, address) ? linked : '#';
         flow.addHtml(`<a class="url" href="${escapeHtml(safe)}" target="_blank" rel="noopener">${escapeHtml(u)}</a>`, pos);
     },
     /**

@@ -4,14 +4,14 @@
  */
 
 import { escapeHtml } from './latex-units.js?v=3';
-import { getPosition, splitTopLevel } from './latex-scan.js?v=2';
-import { escapeTemplateTagsForMath } from './latex-template.js?v=1';
+import { getPosition, splitTopLevel } from './latex-scan.js?v=3';
+import { escapeTemplateTagsAsKatexText } from './template-tags.js?v=1';
 
 /** The renderer methods of this part, mixed into Renderer (latex.js). */
 export const MATH_METHODS = {
     /**
      * Renders math with KaTeX: \label names the current equation, \ref and \eqref show the number,
-     * comments are removed, template placeholders become boxed names. A KaTeX error is reported
+     * comments are removed, template placeholders show as their text. A KaTeX error is reported
      * and the code shown in its place.
      * @this {Renderer}
      * @param {string} tex - the math code.
@@ -22,7 +22,7 @@ export const MATH_METHODS = {
      */
     renderMath(tex, display, pos, { tagged = false } = {}) {
         const doc = this.doc;
-        tex = escapeTemplateTagsForMath(tex, doc.templateSyntax);
+        tex = escapeTemplateTagsAsKatexText(tex, doc.templateSyntax);
         tex = tex.replace(/(^|[^\\])%[^\n]*/g, '$1');
         // \label inside math names the current equation.
         tex = tex.replace(/\\label\s*\{([^}]*)\}/g, (m, l) => { this.renderLabel(l.trim(), pos); return ''; });

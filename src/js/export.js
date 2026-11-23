@@ -2,17 +2,20 @@
  * What the editor exports from the open document: pictures of the pages, a PDF of page
  * pictures for a page around the editor (which cannot use the print dialog), printing (PDF
  * with selectable text through the print dialog), the .tex with its pictures as a ZIP, and
- * everything at once as a ZIP.
+ * everything at once as a ZIP. With template placeholders, the code and what is made of it
+ * (pictures of the pages, HTML, text) show the template as written; print and the PDF follow
+ * the view shown and name it in their title.
  */
 
-import { getPlainText } from './latex.js?v=15';
-import { drawPageCanvas, getCanvasBlob, getStandaloneHtml, openPrintDialog } from './page-export.js?v=4';
+import { getPlainText } from './latex.js?v=16';
+import { drawPageCanvas, getCanvasBlob, getStandaloneHtml, openPrintDialog } from './page-export.js?v=5';
 import { createJpegPdf } from './pdf.js?v=3';
 import { createZip } from './zip.js?v=4';
 import { getDataUrlBytes } from './assets.js?v=6';
 import { state } from './state.js?v=2';
-import { renderPreview } from './preview.js?v=4';
-import { getCurrentPage } from './zoom.js?v=4';
+import { renderPreview, getExportPages } from './preview.js?v=5';
+import { getViewTitle } from './preview-views.js?v=1';
+import { getCurrentPage } from './zoom.js?v=5';
 
 /** The resolution of the PDF of page pictures, in dots per inch, when none is asked for. */
 const DEFAULT_PDF_DPI = 200;
@@ -40,11 +43,12 @@ const POINTS_PER_PIXEL = 0.75;
  */
 export async function getPagePictures(type, which, scale, baseName) {
     const extension = type === 'image/jpeg' ? 'jpg' : type.split('/')[1];
-    const pages = which === 'all' ? state.pages : [state.pages[getCurrentPage()]];
+    const allPages = getExportPages().pages;
+    const pages = which === 'all' ? allPages : [allPages[Math.min(getCurrentPage(), allPages.length - 1)]];
     const pictures = [];
     for (const page of pages) {
         const canvas = await drawPageCanvas(page, scale);
-        const name = which === 'all' && state.pages.length > 1 ? `${baseName}-${String(+page.dataset.page).padStart(2, '0')}.${extension}` : `${baseName}.${extension}`;
+        const name = which === 'all' && allPages.length > 1 ? `${baseName}-${String(+page.dataset.page).padStart(2, '0')}.${extension}` : `${baseName}.${extension}`;
         pictures.push({ name, data: await getCanvasBlob(canvas, type) });
     }
     return pictures;
@@ -64,7 +68,7 @@ export async function createPicturePdf(dpi = DEFAULT_PDF_DPI) {
         pictures.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), px: canvas.width, py: canvas.height,
             w: parseFloat(page.style.width) * POINTS_PER_PIXEL, h: parseFloat(page.style.height) * POINTS_PER_PIXEL });
     }
-    return { pdf: createJpegPdf(pictures, { title: state.name }), pages: pictures.length };
+    return { pdf: createJpegPdf(pictures, { title: getViewTitle(state.name) }), pages: pictures.length };
 }
 
 /**
@@ -73,7 +77,7 @@ export async function createPicturePdf(dpi = DEFAULT_PDF_DPI) {
  */
 export function runPrint() {
     renderPreview();
-    if (state.pages.length) openPrintDialog(state.pages, state.result.meta, state.name);
+    if (state.pages.length) openPrintDialog(state.pages, state.result.meta, getViewTitle(state.name));
 }
 
 /**
@@ -101,11 +105,12 @@ function getPictureFiles() {
  */
 export async function createAllZip(baseName, scale) {
     const pngs = await getPagePictures('image/png', 'all', scale, baseName);
+    const exported = getExportPages();
     const zip = await createZip([
         { name: `${baseName}.tex`, data: state.code },
         ...getPictureFiles(),
-        { name: `${baseName}.html`, data: await getStandaloneHtml(state.pages, state.name, state.result.meta) },
-        { name: `${baseName}.txt`, data: getPlainText(state.result.blocks) },
+        { name: `${baseName}.html`, data: await getStandaloneHtml(exported.pages, state.name, exported.result.meta) },
+        { name: `${baseName}.txt`, data: getPlainText(exported.result.blocks) },
         ...pngs.map(png => ({ name: 'pages/' + png.name, data: png.data })),
     ]);
     return { zip, pages: pngs.length };

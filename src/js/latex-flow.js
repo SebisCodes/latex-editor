@@ -78,7 +78,8 @@ export class Flow {
     /**
      * Adds plain text that is on the page exactly as in the code (one character per character)
      * as a span that knows where it starts, so it can be edited on the page. Runs one space or
-     * line break apart are joined into one span.
+     * line break apart are joined into one span, in the example view of a template only when
+     * both are copied text of one piece.
      * @param {string} html - the escaped text.
      * @param {number} at - the offset of the text in the code.
      * @param {number} length - the length of the text in the code.
@@ -87,7 +88,9 @@ export class Flow {
      */
     addSourceText(html, at, length, source) {
         const owner = this.mode === 'inline' ? this : this.para, last = this.lastLit;
-        if (owner && last && last.o === owner && at - last.end === 1 && owner.html.length === last.len + 1 && owner.html.endsWith(' ') && (source[last.end] === ' ' || source[last.end] === '\n')) {
+        const provenance = this.doc.provenance;
+        const isOnePiece = !provenance || (last && provenance.isCopied(last.end - 1, at + length));
+        if (owner && last && isOnePiece && last.o === owner && at - last.end === 1 && owner.html.length === last.len + 1 && owner.html.endsWith(' ') && (source[last.end] === ' ' || source[last.end] === '\n')) {
             owner.html = owner.html.slice(0, -(SPAN_CLOSE.length + 1)) + ' ' + html + SPAN_CLOSE;
         } else this.addHtml(`<span class="t" data-s="${at}">${html}${SPAN_CLOSE}`, at);
         const target = this.mode === 'inline' ? this : this.para;

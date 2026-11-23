@@ -8,8 +8,8 @@
  */
 
 import { escapeHtml, getColorValue } from './latex-units.js?v=3';
-import { VERBATIM_ENVIRONMENTS } from './latex-names.js?v=2';
-import { createScanner, parseKeyValues } from './latex-scan.js?v=2';
+import { VERBATIM_ENVIRONMENTS } from './latex-names.js?v=3';
+import { createScanner, parseKeyValues } from './latex-scan.js?v=3';
 
 /** @type {Object<string, CommandHandler>} */
 export const ENVIRONMENTS = {
@@ -206,7 +206,7 @@ export const ENVIRONMENTS = {
      * @param {number} pos - the offset in the code to report.
      * @returns {void}
      */
-    longtable(flow, scan, pos) { this.renderAlignedTable(flow, scan, pos, 'tabular'); },
+    longtable(flow, scan, pos) { this.renderAlignedTable(flow, scan, pos, 'tabular', getLongtableAlign(this.doc.longtableMargins)); },
     /**
      * supertabular: a table on a centered line of its own.
      * @param {Flow} flow - the flow to write into.
@@ -614,6 +614,27 @@ for (const name of VERBATIM_ENVIRONMENTS) {
     ENVIRONMENTS[name] = function (flow, scan, pos) { this.renderVerbatim(flow, scan, pos, name); };
 }
 
+/**
+ * Returns where a longtable stands from \LTleft and \LTright: on the left when \LTleft is no
+ * length (0pt), on the right when only \LTright is, else in the middle (\fill on both sides).
+ * @param {?Object<string, string>} margins - the lengths as written by name (LTleft, LTright), or null.
+ * @returns {string} "l", "r" or "c".
+ */
+function getLongtableAlign(margins) {
+    if (!margins) return 'c';
+    if (isZero(margins.LTleft)) return 'l';
+    return isZero(margins.LTright) && !isZero(margins.LTleft) && margins.LTleft !== undefined ? 'r' : 'c';
+}
+
+/**
+ * Tells whether a length as written is no length (0pt, 0, 0.0cm).
+ * @param {string|undefined} value - the length, undefined when it was not set.
+ * @returns {boolean} true for a zero length.
+ */
+function isZero(value) {
+    return value !== undefined && /^0+(\.0*)?\s*[a-z]*$/i.test(value);
+}
+
 /** The renderer methods of this part, mixed into Renderer (latex.js). */
 export const ENVIRONMENT_METHODS = {
     /**
@@ -623,13 +644,14 @@ export const ENVIRONMENT_METHODS = {
      * @param {Scanner} scan - the scanner, after the command name.
      * @param {number} pos - the offset in the code to report.
      * @param {string} name - the table environment.
+     * @param {string} [align='c'] - where the line stands: "l", "c" or "r".
      * @returns {void}
      */
-    renderAlignedTable(flow, scan, pos, name) {
+    renderAlignedTable(flow, scan, pos, name, align = 'c') {
         flow.closeParagraph();
         this.renderTabular(flow, scan, pos, name);
         const p = flow.para;
-        if (p) { p.noindent = true; flow.align = flow.align || 'c'; flow.closeParagraph(); flow.align = null; }
+        if (p) { p.noindent = true; flow.align = flow.align || align; flow.closeParagraph(); flow.align = null; }
     },
 
     /**

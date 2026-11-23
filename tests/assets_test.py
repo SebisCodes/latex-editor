@@ -113,6 +113,8 @@ with tempfile.TemporaryDirectory() as d:
             ch = [m for m in get_log()[n:] if m['type'] == 'latexeditor:change']
             check_that(ch and 'title-picture-2.jpg' in ch[-1].get('assetsChanged', []), 'a new picture is reported as a change')
             # Remove one
+            if frame.get_attribute('#btn-panel', 'aria-expanded') != 'true':
+                frame.click('#btn-panel')
             frame.click('[data-itab=pictures]')
             frame.click('[data-pic-del="alt.jpg"]')
             frame.click('#ask-ok')

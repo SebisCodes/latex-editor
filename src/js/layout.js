@@ -6,10 +6,10 @@
 
 import { openDialog } from './dialogs.js?v=5';
 import { state, ui, getElement, getElements, getNumberInRange } from './state.js?v=2';
-import { saveState } from './storage.js?v=5';
-import { moveCodeLayers } from './code-view.js?v=5';
-import { showZoom } from './zoom.js?v=5';
-import { renderPicturesTab } from './pictures-tab.js?v=5';
+import { saveState } from './storage.js?v=6';
+import { moveCodeLayers } from './code-view.js?v=6';
+import { showZoom } from './zoom.js?v=6';
+import { renderPicturesTab } from './pictures-tab.js?v=6';
 
 /** The smallest and largest share of the width the code takes. */
 const MIN_SPLIT = 0.15;
@@ -73,8 +73,8 @@ function closeSidePanelOnEscape(event) {
 }
 
 /**
- * Connects the splitter, the view buttons of narrow screens, the side panel's button and the
- * panel tabs.
+ * Connects the splitter, the view buttons of narrow screens, the side panel's button, the
+ * panel tabs and the drawer's place below the preview's bar.
  * @returns {void}
  */
 export function startLayout() {
@@ -86,6 +86,19 @@ export function startLayout() {
     showSidePanel(false);
     getElement('#btn-panel').addEventListener('click', () => showSidePanel(ui.work.dataset.panel !== 'open'));
     getElement('#side-panel').addEventListener('keydown', closeSidePanelOnEscape);
+    watchPreviewBarHeight();
+}
+
+/**
+ * Keeps the height of the preview's bar as --preview-bar on the work area: the side panel's
+ * drawer starts below the bar, so the bar's controls stay in view and usable while it is open.
+ * The bar is taller when its controls wrap (narrow work area, long labels of a language).
+ * @returns {void}
+ */
+function watchPreviewBarHeight() {
+    const bar = getElement('.draw-pane > .pane-header');
+    const observer = new ResizeObserver(() => ui.work.style.setProperty('--preview-bar', bar.offsetHeight + 'px'));
+    observer.observe(bar);
 }
 
 /**

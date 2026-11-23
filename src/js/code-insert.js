@@ -5,8 +5,8 @@
  */
 
 import { state, ui } from './state.js?v=2';
-import { addHistoryStep } from './history.js?v=5';
-import { showCodeElement } from './preview.js?v=5';
+import { addHistoryStep } from './history.js?v=6';
+import { showCodeElement } from './preview.js?v=6';
 
 const END_DOCUMENT = '\\end{document}';
 

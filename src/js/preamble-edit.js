@@ -5,8 +5,8 @@
  */
 
 import { state, ui, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=5';
-import { NEVER, PACKAGE_LINES, getDocumentStart, setPreambleLine, hasPackage } from './preamble.js?v=5';
+import { setCode } from './history.js?v=6';
+import { NEVER, PACKAGE_LINES, getDocumentStart, setPreambleLine, hasPackage } from './preamble.js?v=6';
 
 /**
  * Returns where two texts start to differ.

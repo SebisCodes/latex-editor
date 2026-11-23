@@ -5,13 +5,13 @@
  * A text without a preamble gets a button that makes it a complete document.
  */
 
-import { escapeHtml } from './latex.js?v=16';
+import { escapeHtml } from './latex.js?v=17';
 import { state, ui, PIXELS_PER_MM, showToast } from './state.js?v=2';
 import {
     PACKAGE_LINES, getDocumentStart, setPreambleLine, hasPackage, getGeometryOptions, setGeometry, getClassInfo, setClass,
     getPaper, setPaper, getFont, setFont, getPreambleValue, setPreambleValue,
-} from './preamble.js?v=5';
-import { setCodeKeepingCursor } from './preamble-edit.js?v=5';
+} from './preamble.js?v=6';
+import { setCodeKeepingCursor } from './preamble-edit.js?v=6';
 
 const PAPER_CHOICES = [
     ['a4paper', 'A4 (210 × 297 mm)'], ['a5paper', 'A5 (148 × 210 mm)'], ['letterpaper', 'US Letter'], ['legalpaper', 'US Legal'],

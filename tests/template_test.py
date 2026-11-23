@@ -21,6 +21,10 @@
             colored by \\arrayrulecolor, tabularx, \\vfill and \\pagestyle{empty}: no note that the
             preview does not know or understand something, the sans-serif Helvetica face, colored
             rules, the longtable on the left; its example view repeats the item rows
+  tables    the template view of a table shows every tag as written: a tag on a line of its own
+            between the rows (before \\midrule, \\hline or after a row) is a row of its own across the
+            table, inside the outer lines; the rules stay rules; a tag before cell text stays in its
+            cell; 0 errors
   address   ?template= takes the values mustache and angle
   tidy      Tidy keeps every tag and is the same when run twice
   off       with the option off or an unknown value the editor gives the plain LaTeX result
@@ -106,6 +110,20 @@ def get_errors(result):
     return [problem['msg'] for problem in result['problems'] if problem['kind'] == 'error']
 
 
+def get_table_rows(preview):
+    """Returns the rows of the last table of a preview, each as its plain text and its HTML.
+
+    Args:
+        preview (str): the HTML of the pages.
+
+    Returns:
+        list[tuple[str, str]]: per row the text of its cells joined by " | " and the row's HTML.
+    """
+    table = re.findall(r'<table[\s\S]*?</table>', preview)[-1]
+    rows = re.findall(r'<tr>([\s\S]*?)</tr>', table)
+    return [(' | '.join(get_plain_text(cell).strip() for cell in re.findall(r'<td[^>]*>([\s\S]*?)</td>', row)), row) for row in rows]
+
+
 def get_plain_text(highlighted):
     """Returns the plain text of highlighted HTML.
 
@@ -164,6 +182,8 @@ INVOICE_EXAMPLES = {'placeholders': [
     {'name': 'items', 'kind': 'list', 'fields': [{'name': 'label'}, {'name': 'quantity'}, {'name': 'price'}, {'name': 'amount'}],
      'rows': [{'label': 'Chair', 'quantity': '2', 'price': '10.00', 'amount': '20.00'}, {'label': 'Table', 'quantity': '1', 'price': '99.00', 'amount': '99.00'}]},
 ]}
+TABLE_TAGS = ('\\begin{document}\n\\begin{tabular}{|l|r|}\n\\hline\n{{#rows}}\n{{label}} & {{amount}}\\\\\n{{/rows}} \\hline\n'
+              '{{^rows}}{{empty}} & -\\\\{{/rows}}\n{{summary}}\n\\hline\n\\end{tabular}\n\\end{document}\n')
 ADDRESSES = ['?template=mustache', '?embed=1&template=angle', '?template=Mustache', '?template=toString',
              '?template=__proto__', '?template=', '?embed=1', '']
 
@@ -182,9 +202,10 @@ cases = [
     {'code': REFERENCES, 'template': 'mustache'},
     {'code': PLACES, 'template': 'mustache', 'examples': PLACE_EXAMPLES},
     {'code': INVOICE, 'template': 'mustache', 'examples': INVOICE_EXAMPLES},
+    {'code': TABLE_TAGS, 'template': 'mustache'},
 ] + [{'code': code, 'template': syntax} for syntax, code, expected in ERROR_CASES.values()]
 report = run_report(cases, ADDRESSES)
-(letter, letter_off, letter_unknown, angle, angle_off, math, math_off, comment, parameter, letter_example, references, references_template, places, invoice), error_results = report['cases'][:14], report['cases'][14:]
+(letter, letter_off, letter_unknown, angle, angle_off, math, math_off, comment, parameter, letter_example, references, references_template, places, invoice, table_tags), error_results = report['cases'][:15], report['cases'][15:]
 
 print('-- the letter template')
 check_that(get_errors(letter) == [], f'mustache: 0 errors (got {get_errors(letter)})')
@@ -263,6 +284,22 @@ check_that('font-size:26.57px' in invoice['html'] and 'color:#1f4e79' in invoice
 check_that(invoice['meta']['pagestyle'] == 'empty', '\\pagestyle{empty}')
 shown = re.sub(r'<[^>]+>', ' ', invoice['example']['html'])
 check_that('Chair' in shown and 'Table' in shown and '99.00' in shown and invoice['example']['html'].count('<tr>') == 5, 'the example view repeats the item rows of the longtable (and keeps the header, total and tabularx rows)')
+
+print('-- tables')
+invoice_rows = get_table_rows(invoice['html'])
+check_that([text for text, row in invoice_rows] == ['Item | Quantity | Price | Amount', '{{#items}}', '{{label}} | {{quantity}} | {{price}} | {{amount}}', '{{/items}}', 'Total | {{total}}'],
+           f'invoice: every tag of the longtable shows as written, the section tags as rows of their own {[text for text, row in invoice_rows]}')
+check_that('colspan="4"' in invoice_rows[1][1] and 'colspan="4"' in invoice_rows[3][1], 'invoice: a section tag on its own line spans the table')
+check_that('border-top:0.5pt solid #9db4cc' in invoice_rows[1][1] and 'border-top:0.5pt solid #9db4cc' in invoice_rows[4][1]
+           and 'border-top' not in invoice_rows[3][1] and 'midrule' not in invoice['html'], 'invoice: \\midrule before and after the list stays a rule in its place')
+table_rows = get_table_rows(table_tags['html'])
+check_that([text for text, row in table_rows] == ['{{#rows}}', '{{label}} | {{amount}}', '{{/rows}}', '{{^rows}}{{empty}} | -', '{{/rows}}', '{{summary}}'],
+           f'every tag in a table shows as written, in the order of the code {[text for text, row in table_rows]}')
+check_that('border-top:0.4pt' in table_rows[0][1] and 'border-top:0.4pt' in table_rows[3][1] and 'border-bottom:0.4pt' in table_rows[5][1],
+           'a tag before \\hline, on its line or the next, leaves the rule a rule; the rule after the last tag closes the table')
+check_that(all('colspan="2"' in row and 'border-left:solid 0.4pt' in row and 'border-right:solid 0.4pt' in row for row in (table_rows[0][1], table_rows[2][1], table_rows[5][1])),
+           'a tag on its own line spans the table inside its outer lines')
+check_that(get_errors(table_tags) == [] and 'hline' not in table_tags['html'], f'tags in a table read with 0 errors (got {get_errors(table_tags)})')
 
 print('-- address')
 check_that(report['addresses'] == ['mustache', 'angle', None, None, None, None, None, None], f'?template= values: {report["addresses"]}')

@@ -9,7 +9,7 @@
 
 import { getModelColor, getColorValue } from './latex-units.js?v=3';
 import { createScanner, getPosition, findClosingBrace, splitTopLevel } from './latex-scan.js?v=3';
-import { findTemplateTagAt } from './template-tags.js?v=1';
+import { findTemplateTagAt, hasOnlySectionTags } from './template-tags.js?v=1';
 
 /** Table environments with a width as first argument. */
 const WIDE_TABLES = new Set(['tabular*', 'tabularx', 'xltabular', 'tabulary']);
@@ -35,6 +35,7 @@ const RULE_WIDTHS = { toprule: 0.8, bottomrule: 0.8, midrule: 0.5 };
  * @property {TableRule[]} rules - the rules above the row.
  * @property {number} pos - the offset of the row in the code.
  * @property {?string} rowColor - the \rowcolor of the row.
+ * @property {boolean} [isTagLine] - true for a template tag on a line of its own: one cell, the tag, across the table.
  */
 
 /**
@@ -129,7 +130,9 @@ export const TABLE_METHODS = {
 
     /**
      * Reads the rows of a table body: each row with its cells, the rules above it and its
-     * \rowcolor. Rows without text only give their rules to the next row; rules after the last
+     * \rowcolor. A template tag on a line of its own between the rows (readTagLine()) is a row of
+     * its own across the table, so the template view shows it as written and the rules around it
+     * stay rules. Rows without text only give their rules to the next row; rules after the last
      * row are returned apart. Moves nothing but the scanners it makes.
      * @this {Renderer}
      * @param {Scanner} scan - the scanner over the body, after the column specification.
@@ -143,14 +146,43 @@ export const TABLE_METHODS = {
         for (let index = 0; index < parts.length; index++) {
             const rowScan = createScanner(scan.s, parts[index].a, parts[index].b, scan.v);
             if (index > 0) { this.readStar(rowScan); this.readOption(rowScan); }
-            const { rules, rowColor } = this.readRowRules(rowScan, pos);
+            let lead = this.readRowRules(rowScan, pos);
+            let rowColor = lead.rowColor;
+            pendingRules = pendingRules.concat(lead.rules);
+            for (let tag = this.readTagLine(rowScan); tag; tag = this.readTagLine(rowScan)) {
+                rows.push({ cells: [{ a: tag.start, b: tag.end }], rules: pendingRules, pos: getPosition(scan, tag.start), rowColor: null, isTagLine: true });
+                lead = this.readRowRules(rowScan, pos);
+                pendingRules = lead.rules;
+                rowColor = lead.rowColor || rowColor;
+            }
             const start = rowScan.i, end = parts[index].b;
-            if (!scan.s.slice(start, end).trim()) { if (rules.length) pendingRules = pendingRules.concat(rules); continue; }
+            if (!scan.s.slice(start, end).trim()) continue;
             const cells = splitTopLevel(scan.s, start, end, getCellSeparatorLength);
-            rows.push({ cells, rules: pendingRules.concat(rules), pos: getPosition(scan, start), rowColor });
+            rows.push({ cells, rules: pendingRules, pos: getPosition(scan, start), rowColor });
             pendingRules = [];
         }
         return { rows, trailingRules: pendingRules };
+    },
+
+    /**
+     * Reads a template tag that stands on a line of its own in a table, at the reading position:
+     * any tag followed by a rule or row setting (\midrule, \hline …), or a section tag with nothing
+     * after it on its line. Moves the row's scanner past the tag (a reader).
+     * @this {Renderer}
+     * @param {Scanner} rowScan - the scanner over the row, after its rules and spaces.
+     * @returns {?import('./template-tags.js').TemplateTag} the tag, null when no tag stands there on a line of its own.
+     */
+    readTagLine(rowScan) {
+        const tag = findTemplateTagAt(rowScan.s, rowScan.i, this.doc.templateSyntax);
+        if (!tag || tag.end > rowScan.end) return null;
+        const probe = createScanner(rowScan.s, tag.end, rowScan.end, rowScan.v);
+        this.moveOverSpace(probe, false);
+        const isLineEnd = probe.i >= probe.end || /[\r\n%]/.test(probe.s[probe.i]);
+        this.moveOverSpace(probe);
+        const isBeforeRule = ROW_COMMAND.test(probe.s.slice(probe.i, Math.min(probe.i + 20, probe.end)));
+        if (!isBeforeRule && !(isLineEnd && hasOnlySectionTags(rowScan.s.slice(tag.start, tag.end), this.doc.templateSyntax))) return null;
+        rowScan.i = tag.end;
+        return tag;
     },
 
     /**
@@ -167,7 +199,6 @@ export const TABLE_METHODS = {
         let rowColor = null;
         for (;;) {
             this.moveOverSpace(rowScan);
-            this.moveOverSectionTagBeforeRule(rowScan);
             const match = ROW_COMMAND.exec(text.slice(rowScan.i, rowScan.i + 20));
             if (!match) break;
             rowScan.i += match[0].length;
@@ -204,20 +235,6 @@ export const TABLE_METHODS = {
         if (color) this.doc.ruleColor = color;
     },
     /**
-     * Moves past a template section tag at the start of a row when a rule or row setting follows it,
-     * so a template's section line before \midrule leaves the rule a rule (a reader).
-     * @this {Renderer}
-     * @param {Scanner} rowScan - the scanner over the row.
-     * @returns {void}
-     */
-    moveOverSectionTagBeforeRule(rowScan) {
-        const tag = findTemplateTagAt(rowScan.s, rowScan.i, this.doc.templateSyntax);
-        if (!tag || tag.kind === 'value') return;
-        const after = /^\s*/.exec(rowScan.s.slice(tag.end, tag.end + 200))[0].length;
-        if (ROW_COMMAND.test(rowScan.s.slice(tag.end + after, tag.end + after + 20))) rowScan.i = tag.end + after;
-    },
-
-    /**
      * Renders a row of a table; a row with more columns than the specification is reported.
      * @this {Renderer}
      * @param {Scanner} scan - the scanner over the table body.
@@ -232,13 +249,28 @@ export const TABLE_METHODS = {
         let column = 0;
         let cellsHtml = '';
         for (const cell of row.cells) {
-            const content = this.readCellContent(scan, cell, spec.cols[column] || { align: 'l' }, pos);
+            const content = row.isTagLine ? this.renderTagLineCell(scan, cell, spec) : this.readCellContent(scan, cell, spec.cols[column] || { align: 'l' }, pos);
             const styles = getCellStyles(content, spec, row, bottomRules, column, columnCount);
             cellsHtml += `<td${content.span > 1 ? ` colspan="${content.span}"` : ''}${styles.length ? ` style="${styles.join(';')}"` : ''} data-p="${getPosition(scan, cell.a)}">${content.html}</td>`;
             column += content.span;
         }
         if (column > columnCount) this.doc.addProblem(row.pos, `This table row has ${column} columns, but the table was set up for ${columnCount} - add a column to {${spec.text}} or remove an &`, 'error');
         return `<tr>${cellsHtml}</tr>`;
+    },
+
+    /**
+     * Renders the cell of a template tag on a line of its own: the tag as written, across every
+     * column, between the table's outer vertical lines.
+     * @this {Renderer}
+     * @param {Scanner} scan - the scanner over the table body.
+     * @param {Range} cell - the range of the tag.
+     * @param {object} spec - the table's column specification (parseColumnSpec()).
+     * @returns {TableCell} the cell's HTML, spanning every column.
+     */
+    renderTagLineCell(scan, cell, spec) {
+        const columnCount = spec.cols.length || 1;
+        const columnSpec = { align: 'l', lb: spec.cols[0]?.lb, rb: spec.cols[columnCount - 1]?.rb };
+        return { html: this.renderInline(scan, cell), span: columnCount, columnSpec, cellColor: null, isMulticolumn: true };
     },
 
     /**

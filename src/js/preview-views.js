@@ -13,7 +13,7 @@
  * print and PDF follow the view shown.
  */
 
-import { render } from './latex.js?v=16';
+import { render } from './latex.js?v=17';
 import { state, areas } from './state.js?v=2';
 import { getTemplateSyntax, getTemplateNameByAddress } from './template-tags.js?v=1';
 import { buildViewTitle } from './template-controls.js?v=1';

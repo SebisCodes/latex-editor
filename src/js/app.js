@@ -20,7 +20,7 @@
  *   6. offer the test hook window.latexEditor.
  */
 
-import { createI18n } from './i18n.js?v=26';
+import { createI18n } from './i18n.js?v=27';
 import { createWrap } from './wrap.js?v=5';
 import { createAiStatus } from './aistatus.js?v=9';
 import { createSync, VIEWER } from './sync.js?v=24';
@@ -32,34 +32,34 @@ import { assets } from './assets.js?v=6';
 import { createAi } from './ai.js?v=17';
 import { createMcp } from './mcp.js?v=6';
 import { formatLatex } from './latex-tidy.js?v=3';
-import { drawPageCanvas } from './page-export.js?v=5';
+import { drawPageCanvas } from './page-export.js?v=6';
 import { state, ui, areas, PREFIX, getElement, showToast } from './state.js?v=2';
-import { getSettings, startStorageSync } from './storage.js?v=5';
-import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=5';
-import { setCode, addHistoryStep, undo, redo } from './history.js?v=5';
-import { renderPreview, startPreview, startFontsWatch, getExportPages, startPreviewTimer } from './preview.js?v=5';
-import { setZoom, showPage, startZoom } from './zoom.js?v=5';
-import { startPageClicks, startTextEditing } from './text-edit.js?v=5';
-import { startPictureMoving } from './picture-move.js?v=5';
-import { startProblems } from './problems.js?v=5';
-import { startTyping } from './typing.js?v=5';
-import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=5';
-import { startPicturesTab } from './pictures-tab.js?v=5';
-import { startSettingsPanel } from './settings-panel.js?v=5';
-import { startOutline } from './outline.js?v=5';
-import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=5';
-import { showFilePicker, startFileImport } from './file-import.js?v=5';
-import { startKeyboard } from './keyboard.js?v=5';
-import { showSplit, startLayout, startDialogs } from './layout.js?v=5';
-import { startExportDialog } from './export-dialog.js?v=5';
-import { startTemplateControls } from './template-panel.js?v=1';
+import { getSettings, startStorageSync } from './storage.js?v=6';
+import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=6';
+import { setCode, addHistoryStep, undo, redo } from './history.js?v=6';
+import { renderPreview, startPreview, startFontsWatch, getExportPages, startPreviewTimer } from './preview.js?v=6';
+import { setZoom, showPage, startZoom } from './zoom.js?v=6';
+import { startPageClicks, startTextEditing } from './text-edit.js?v=6';
+import { startPictureMoving } from './picture-move.js?v=6';
+import { startProblems } from './problems.js?v=6';
+import { startTyping } from './typing.js?v=6';
+import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=6';
+import { startPicturesTab } from './pictures-tab.js?v=6';
+import { startSettingsPanel } from './settings-panel.js?v=6';
+import { startOutline } from './outline.js?v=6';
+import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=6';
+import { showFilePicker, startFileImport } from './file-import.js?v=6';
+import { startKeyboard } from './keyboard.js?v=6';
+import { showSplit, startLayout, startDialogs } from './layout.js?v=6';
+import { startExportDialog } from './export-dialog.js?v=6';
+import { startTemplateControls } from './template-panel.js?v=2';
 import { createTemplateExamples } from './template-examples.js?v=1';
-import { createPicturePdf, runPrint } from './export.js?v=5';
-import { getPlainText } from './latex.js?v=16';
-import { receiveDocument, importExternalDocument } from './incoming.js?v=5';
+import { createPicturePdf, runPrint } from './export.js?v=6';
+import { getPlainText } from './latex.js?v=17';
+import { receiveDocument, importExternalDocument } from './incoming.js?v=6';
 import {
     getPromptState, getProblemList, getSectionList, getFileList, openFileByName, createFile, addLatex, updateText, showLine,
-} from './agent-api.js?v=5';
+} from './agent-api.js?v=6';
 
 /** The fonts of the pages, loaded before the first pages are laid out. */
 const PAGE_FONTS = ['400 16px "LM Roman"', '700 16px "LM Roman"', 'italic 400 16px "LM Roman"', '400 16px "LM Mono"', '400 16px "LM Sans"', '700 16px "LM Sans"'];

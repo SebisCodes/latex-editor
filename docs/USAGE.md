@@ -38,7 +38,8 @@ your documents stay there unless you send them somewhere yourself.
 ## Side panel
 
 The side panel holds the document settings, Insert, Pictures and the Outline. The button at the top right of the work area opens it over the
-preview and closes it again (Escape too); it is closed when the editor opens. On a phone it is the
+preview, below the preview's bar, and closes it again (Escape too); it is closed when the editor
+opens. The bar's controls (the view switch, the page buttons and the zoom bar) stay in view and usable while it is open. On a phone it is the
 view **Edit**.
 
 ## Templates with placeholders

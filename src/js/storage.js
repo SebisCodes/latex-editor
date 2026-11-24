@@ -12,8 +12,8 @@
 import { store } from './files.js?v=11';
 import { assets } from './assets.js?v=6';
 import { state, areas, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=8';
-import { showFileName } from './documents.js?v=8';
+import { setCode } from './history.js?v=9';
+import { showFileName } from './documents.js?v=9';
 
 const SETTINGS_KEY = 'latexeditor.v1';
 /** How long after typing the document is stored, in milliseconds. */

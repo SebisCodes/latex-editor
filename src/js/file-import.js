@@ -9,12 +9,12 @@
 
 import { readAsDataUrl } from './assets.js?v=6';
 import { state, ui, DEFAULT_NAME, getElement, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=8';
-import { renderPreview } from './preview.js?v=8';
-import { openNewDocument } from './documents.js?v=8';
-import { addPicture } from './picture-files.js?v=8';
-import { renderInsertPanel } from './insert-panel.js?v=8';
-import { TYPING_FIELDS } from './keyboard.js?v=8';
+import { setCode } from './history.js?v=9';
+import { renderPreview } from './preview.js?v=9';
+import { openNewDocument } from './documents.js?v=9';
+import { addPicture } from './picture-files.js?v=9';
+import { renderInsertPanel } from './insert-panel.js?v=9';
+import { TYPING_FIELDS } from './keyboard.js?v=9';
 import { readZipEntries, readEntryData } from './zip-read.js?v=2';
 
 const MEGABYTE = 1024 * 1024;

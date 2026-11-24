@@ -16,10 +16,10 @@ import { store } from './files.js?v=11';
 import { assets } from './assets.js?v=6';
 import { VIEWER } from './sync.js?v=25';
 import { state, ui, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=8';
-import { renderPreview } from './preview.js?v=8';
-import { openDocument, openNewDocument, createBlankDocument } from './documents.js?v=8';
-import { renderInsertPanel } from './insert-panel.js?v=8';
+import { setCode } from './history.js?v=9';
+import { renderPreview } from './preview.js?v=9';
+import { openDocument, openNewDocument, createBlankDocument } from './documents.js?v=9';
+import { renderInsertPanel } from './insert-panel.js?v=9';
 
 const AI_DOCUMENT_NAME = 'AI document';
 const END_DOCUMENT = '\\end{document}';

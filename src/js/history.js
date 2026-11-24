@@ -7,10 +7,10 @@
 
 import { assets } from './assets.js?v=6';
 import { state, ui, areas, getElement, showToast } from './state.js?v=2';
-import { renderCode } from './code-view.js?v=8';
-import { renderPreview } from './preview.js?v=8';
-import { saveState } from './storage.js?v=8';
-import { renderPicturesTab } from './pictures-tab.js?v=8';
+import { renderCode } from './code-view.js?v=9';
+import { renderPreview } from './preview.js?v=9';
+import { saveState } from './storage.js?v=9';
+import { renderPicturesTab } from './pictures-tab.js?v=9';
 
 /** The most undo steps kept per document. */
 const MAX_HISTORY = 300;

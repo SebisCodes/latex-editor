@@ -1,8 +1,9 @@
 /**
- * The code of a picture moved on the pages (picture-move.js): where its source is, what goes
- * when it leaves, and the code with it at its new place. A picture stands for its figure
- * environment, or for its \includegraphics when it stands outside a figure; it goes as its own
- * paragraph between blocks, or right beside another picture, or swaps places with it.
+ * The code of a picture moved or removed on the pages (picture-move.js): where its source is,
+ * what goes when it leaves, and the code with it at its new place or without it. A picture
+ * stands for its figure environment, or for its \includegraphics when it stands outside a
+ * figure; it goes as its own paragraph between blocks, or right beside another picture, or
+ * swaps places with it.
  */
 
 import { state, getElements } from './state.js?v=2';
@@ -117,10 +118,29 @@ function getCutRange(code, source) {
         a = lineStart;
         b = Math.min(lineEnd + 1, code.length);
         const nextLineEnd = code.indexOf('\n', b);
-        if (code.slice(a - 2, a) === '\n\n' && nextLineEnd >= 0 && !code.slice(b, nextLineEnd).trim()) b = nextLineEnd + 1;
+        if (/\n[ \t]*\n$/.test(code.slice(0, a)) && nextLineEnd >= 0 && !code.slice(b, nextLineEnd).trim()) b = nextLineEnd + 1;
     } else if (/[ \t]/.test(code[b] || '')) b++;
     else if (/[ \t]/.test(code[a - 1] || '')) a--;
     return { a, b, ls: lineStart, le: lineEnd };
+}
+
+/**
+ * The code after a removal.
+ * @typedef {object} RemovedCode
+ * @property {string} code - the code without the picture.
+ * @property {number} at - where the picture's code stood.
+ */
+
+/**
+ * Returns the code with a picture's source taken out: its lines with one of two blank lines
+ * around them when it has them to itself, else the source with one space beside it.
+ * @param {string} code - the code.
+ * @param {CodeRange} source - the picture's source.
+ * @returns {RemovedCode} the code without the source and where the source stood.
+ */
+export function getRemovedCode(code, source) {
+    const { a, b } = getCutRange(code, source);
+    return { code: code.slice(0, a) + code.slice(b), at: a };
 }
 
 /**

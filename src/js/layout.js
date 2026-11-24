@@ -1,15 +1,15 @@
 /**
  * The layout of the editor: the splitter between code and pages (dragged or moved with the
- * arrow keys, remembered), the side panel (a drawer on the desktop, closed at the start) and its
+ * arrow keys, remembered), the side panel (a column on the desktop, closed at the start) and its
  * tabs, the views of narrow screens, and the closing of dialogs.
  */
 
 import { openDialog } from './dialogs.js?v=5';
 import { state, ui, getElement, getElements, getNumberInRange } from './state.js?v=2';
-import { saveState } from './storage.js?v=8';
-import { moveCodeLayers } from './code-view.js?v=8';
-import { showZoom } from './zoom.js?v=8';
-import { renderPicturesTab } from './pictures-tab.js?v=8';
+import { saveState } from './storage.js?v=9';
+import { moveCodeLayers } from './code-view.js?v=9';
+import { showZoom } from './zoom.js?v=9';
+import { renderPicturesTab } from './pictures-tab.js?v=9';
 
 /** The smallest and largest share of the width the code takes. */
 const MIN_SPLIT = 0.15;
@@ -52,7 +52,7 @@ function showPanelTab(tab) {
 }
 
 /**
- * Opens or closes the side panel's drawer.
+ * Opens or closes the side panel's column.
  * @param {boolean} isOpen - true to open it.
  * @returns {void}
  */
@@ -62,19 +62,8 @@ export function showSidePanel(isOpen) {
 }
 
 /**
- * Closes the side panel's drawer with Escape inside it and puts the focus on its button.
- * @param {KeyboardEvent} event - the key in the side panel.
- * @returns {void}
- */
-function closeSidePanelOnEscape(event) {
-    if (event.key !== 'Escape' || ui.work.dataset.panel !== 'open' || event.target.closest('dialog')) return;
-    showSidePanel(false);
-    getElement('#btn-panel').focus();
-}
-
-/**
- * Connects the splitter, the view buttons of narrow screens, the side panel's button, the
- * panel tabs and the drawer's place below the preview's bar.
+ * Connects the splitter, the view buttons of narrow screens, the side panel's button and the
+ * panel tabs.
  * @returns {void}
  */
 export function startLayout() {
@@ -85,20 +74,6 @@ export function startLayout() {
     getElements('[data-itab]').forEach(button => button.addEventListener('click', () => showPanelTab(button)));
     showSidePanel(false);
     getElement('#btn-panel').addEventListener('click', () => showSidePanel(ui.work.dataset.panel !== 'open'));
-    getElement('#side-panel').addEventListener('keydown', closeSidePanelOnEscape);
-    watchPreviewBarHeight();
-}
-
-/**
- * Keeps the height of the preview's bar as --preview-bar on the work area: the side panel's
- * drawer starts below the bar, so the bar's controls stay in view and usable while it is open.
- * The bar is taller when its controls wrap (narrow work area, long labels of a language).
- * @returns {void}
- */
-function watchPreviewBarHeight() {
-    const bar = getElement('.draw-pane > .pane-header');
-    const observer = new ResizeObserver(() => ui.work.style.setProperty('--preview-bar', bar.offsetHeight + 'px'));
-    observer.observe(bar);
 }
 
 /**
@@ -122,7 +97,7 @@ function moveSplitOnKey(event) {
 function moveSplitterWithPointer(splitter, event) {
     splitter.setPointerCapture(event.pointerId);
     const area = ui.work.getBoundingClientRect();
-    const available = area.width - splitter.offsetWidth;
+    const available = area.width - getElement('.inspector').offsetWidth - splitter.offsetWidth;
     /**
      * Sets the split to the pointer's place.
      * @param {PointerEvent} moveEvent - the pointermove.

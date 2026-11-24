@@ -8,7 +8,7 @@
  */
 
 import { state, ui, getElements, getNumberInRange } from './state.js?v=2';
-import { PICTURES, findGraphicCode, isAloneInCell, getBodyRange } from './picture-code.js?v=2';
+import { PICTURES, findGraphicCode, isAloneInCell, getBodyRange } from './picture-code.js?v=3';
 
 /** The middle of a picture where a drop swaps: from this share of its width ... */
 const SWAP_FROM = 0.25;

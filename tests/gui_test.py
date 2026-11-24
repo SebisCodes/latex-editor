@@ -49,7 +49,7 @@ def read(name):
 
 
 def open_side_panel(page):
-    """Opens the side panel's drawer when it is closed (it is closed at the start).
+    """Opens the side panel's column when it is closed (it is closed at the start).
 
     Args:
         page (Page): the editor's page or frame.
@@ -330,6 +330,95 @@ with sync_playwright() as pw:
     caret = tpage.evaluate('() => { const t = document.querySelector("#code"); return t.value.slice(t.selectionStart, t.selectionStart + 16); }')
     check_that(caret == '\\includegraphics' and get_touch_state('S.code') == tex, 'touch: a tap on a picture still leads to its code')
     tctx.close()
+
+    # --- Removing pictures: a click selects a picture, its X or Delete removes its code ---
+    remove_tex = ('\\documentclass{article}\n\\usepackage{graphicx}\n\\begin{document}\nFirst paragraph.\n\n'
+                  '\\begin{figure}[h]\n  \\centering\n  \\includegraphics[width=0.4\\textwidth]{example-image-a}\n  \\caption{A picture}\n\\end{figure}\n\n'
+                  'Second paragraph.\n\n\\includegraphics[width=3cm]{example-image-b}\n\n'
+                  '\\begin{tabular}{ll}\n\\includegraphics[width=2cm]{example-image-a} & cell\n\\end{tabular}\n\nThird paragraph.\n\n\\end{document}\n')
+    for width in (1440, 390):
+        rctx = browser.new_context(viewport={'width': width, 'height': 900})
+        rpage = rctx.new_page()
+        rpage.on('pageerror', lambda e: errors.append(str(e)))
+        rpage.goto(URL + ('de/' if width == 390 else ''), wait_until='networkidle')
+        rpage.wait_for_timeout(600)
+        set_code(rpage, remove_tex)
+        if width < 860:
+            rpage.click('[data-pane=draw]')
+            rpage.wait_for_timeout(200)
+        else:
+            rpage.click('#code')
+        tag = f'{width} px: '
+        pictures = rpage.locator('#pages .example-picture')
+        layout_before = rpage.evaluate('() => { const d = document.querySelector("#pages").getBoundingClientRect(); return [...document.querySelectorAll("#pages .t, #pages .example-picture")].map(e => { const r = e.getBoundingClientRect(); return [r.x - d.x, r.y - d.y, r.width, r.height].join(); }).join(";") + document.querySelector("#scroller").scrollHeight; }')
+        pictures.nth(0).click()
+        rpage.wait_for_timeout(200)
+        box, x = pictures.nth(0).bounding_box(), rpage.locator('.picture-remove').bounding_box()
+        check_that(rpage.locator('.picture-outline').is_visible() and x and x['width'] >= 24 and x['height'] >= 24, tag + 'a click on a picture shows its outline and the X')
+        check_that(x and box['x'] < x['x'] and x['x'] + x['width'] <= box['x'] + box['width'] and box['y'] <= x['y'] < box['y'] + 10, tag + 'the X stands at the top right corner inside the picture')
+        layout_after = rpage.evaluate('() => { const d = document.querySelector("#pages").getBoundingClientRect(); return [...document.querySelectorAll("#pages .t, #pages .example-picture")].map(e => { const r = e.getBoundingClientRect(); return [r.x - d.x, r.y - d.y, r.width, r.height].join(); }).join(";") + document.querySelector("#scroller").scrollHeight; }')
+        check_that(layout_before == layout_after, tag + 'the X and the outline move nothing on the pages')
+        check_that(rpage.locator('.picture-remove').get_attribute('title') == ('Bild entfernen' if width == 390 else 'Remove picture'), tag + 'the X is named in the language of the page')
+        check_that(rpage.locator('#code').is_visible() != (width < 860), tag + 'the click leads to the code (on a phone the pages stay)')
+        rpage.keyboard.press('Delete')
+        rpage.wait_for_timeout(400)
+        removed = remove_tex.replace('\\begin{figure}[h]\n  \\centering\n  \\includegraphics[width=0.4\\textwidth]{example-image-a}\n  \\caption{A picture}\n\\end{figure}\n\n', '', 1)
+        check_that(get_state(rpage, 'S.code') == removed, tag + 'Delete removes the whole figure environment and its blank line')
+        rpage.keyboard.press('Control+z')
+        rpage.wait_for_timeout(400)
+        check_that(get_state(rpage, 'S.code') == remove_tex, tag + 'one Undo brings the figure back')
+        pictures.nth(1).click()
+        rpage.wait_for_timeout(200)
+        rpage.click('.picture-remove')
+        rpage.wait_for_timeout(400)
+        check_that(get_state(rpage, 'S.code') == remove_tex.replace('\\includegraphics[width=3cm]{example-image-b}\n\n', '', 1), tag + 'the X removes an \\includegraphics of its own paragraph')
+        rpage.keyboard.press('Control+z')
+        rpage.wait_for_timeout(400)
+        pictures.nth(2).click()
+        rpage.wait_for_timeout(200)
+        rpage.click('.picture-remove')
+        rpage.wait_for_timeout(400)
+        check_that(get_state(rpage, 'S.code') == remove_tex.replace('\\includegraphics[width=2cm]{example-image-a} & cell', '& cell', 1), tag + 'the X removes a picture of a table cell, the cell stays')
+        rpage.keyboard.press('Control+z')
+        rpage.wait_for_timeout(400)
+        pictures.nth(1).click()
+        rpage.wait_for_timeout(200)
+        rpage.keyboard.press('Escape')
+        check_that(rpage.locator('.picture-remove').is_hidden() and rpage.locator('.picture-outline').is_hidden(), tag + 'Escape hides the X')
+        pictures.nth(1).click()
+        rpage.wait_for_timeout(200)
+        rpage.locator('#pages .t', has_text='Third paragraph').dispatch_event('pointerdown')
+        check_that(rpage.locator('.picture-remove').is_hidden(), tag + 'a press elsewhere hides the X')
+        if width < 860:
+            corner = pictures.nth(1).bounding_box()
+            pictures.nth(1).click(position={'x': 2, 'y': corner['height'] - 2})
+            rpage.wait_for_timeout(200)
+            pictures.nth(1).click(position={'x': 2, 'y': corner['height'] - 2})
+            rpage.wait_for_timeout(200)
+            check_that(rpage.locator('#code').is_visible(), tag + 'a tap on the selected picture opens the code')
+        else:
+            pictures.nth(1).click()
+            rpage.wait_for_timeout(200)
+            rpage.evaluate('() => { const t = document.querySelector("#code"); t.focus(); t.setSelectionRange(0, 0); }')
+            rpage.keyboard.press('Delete')
+            rpage.wait_for_timeout(300)
+            check_that(get_state(rpage, 'S.code') == remove_tex[1:], tag + 'Delete in the code edits the code')
+            rpage.keyboard.press('Control+z')
+            rpage.wait_for_timeout(400)
+            pictures.nth(0).click()
+            rpage.wait_for_timeout(200)
+            target = rpage.locator('#pages .t', has_text='Second paragraph').bounding_box()
+            b = pictures.nth(0).bounding_box()
+            rpage.mouse.move(b['x'] + b['width'] / 2, b['y'] + b['height'] / 2)
+            rpage.mouse.down()
+            rpage.mouse.move(b['x'] + b['width'] / 2 + 8, b['y'] + b['height'] / 2 + 8, steps=2)
+            rpage.mouse.move(target['x'] + 4, target['y'] + target['height'] - 1, steps=8)
+            rpage.mouse.up()
+            rpage.wait_for_timeout(400)
+            code = get_state(rpage, 'S.code')
+            check_that('Second paragraph.\n\n\\begin{figure}' in code and rpage.locator('.picture-remove').is_hidden(), tag + 'a selected picture still moves by dragging, and the X goes')
+        rpage.screenshot(path=os.path.join(os.environ.get('SHOT_DIR', '/tmp'), f'latex-remove-{width}.png')) if os.environ.get('SHOT_DIR') else None
+        rctx.close()
 
     # --- Pictures beside each other: reorder in one paragraph, swap or insert in table cells ---
     actx = browser.new_context(viewport={'width': 1440, 'height': 900})

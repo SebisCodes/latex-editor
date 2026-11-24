@@ -12,10 +12,11 @@
  */
 
 import { state, ui, NARROW_SCREEN, showToast } from './state.js?v=2';
-import { setCode, addTypingStep } from './history.js?v=8';
-import { showCodePosition } from './code-view.js?v=8';
-import { showCodeElement } from './preview.js?v=8';
-import { showPane } from './layout.js?v=8';
+import { setCode, addTypingStep } from './history.js?v=9';
+import { showCodePosition } from './code-view.js?v=9';
+import { showCodeElement } from './preview.js?v=9';
+import { showPane } from './layout.js?v=9';
+import { handlePictureClick } from './picture-remove.js?v=1';
 import { getRangeAtPoint, getCaretOffset, findRunAt } from './preview-caret.js?v=2';
 import { formatAsTex, isRunInCode, formatBreaks, getBreakRefusal, isInHeading, formatAfterHeading } from './text-breaks.js?v=2';
 
@@ -219,13 +220,15 @@ function writeTextEdit(span, before, edited, change) {
 }
 
 /**
- * Leads a click on the pages to the place in the code; a click on text being edited or
- * editable, and the end of a text selection, are left alone (a click handler).
+ * Leads a click on the pages to the place in the code; a click on a picture selects it
+ * (picture-remove.js); a click on text being edited or editable, and the end of a text
+ * selection, are left alone (a click handler).
  * @param {MouseEvent} event - the click.
  * @returns {void}
  */
 function showClickedPlace(event) {
     if (event.target.closest('[contenteditable], .t[data-s]') || state.textEdit?.span.isConnected) return;
+    if (handlePictureClick(event)) return;
     const selection = getSelection();
     if (selection && !selection.isCollapsed && ui.pages.contains(selection.anchorNode)) return;
     const element = event.target.closest('[data-p]');

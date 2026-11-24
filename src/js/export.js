@@ -13,9 +13,9 @@ import { createJpegPdf } from './pdf.js?v=3';
 import { createZip } from './zip.js?v=4';
 import { getDataUrlBytes } from './assets.js?v=6';
 import { state } from './state.js?v=2';
-import { renderPreview, getExportPages } from './preview.js?v=8';
+import { renderPreview, getExportPages } from './preview.js?v=9';
 import { getViewTitle } from './preview-views.js?v=3';
-import { getCurrentPage } from './zoom.js?v=8';
+import { getCurrentPage } from './zoom.js?v=9';
 
 /** The resolution of the PDF of page pictures, in dots per inch, when none is asked for. */
 const DEFAULT_PDF_DPI = 200;

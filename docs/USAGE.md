@@ -37,10 +37,9 @@ your documents stay there unless you send them somewhere yourself.
 
 ## Side panel
 
-The side panel holds the document settings, Insert, Pictures and the Outline. The button at the top right of the work area opens it over the
-preview, below the preview's bar, and closes it again (Escape too); it is closed when the editor
-opens. The bar's controls (the view switch, the page buttons and the zoom bar) stay in view and usable while it is open. On a phone it is the
-view **Edit**.
+The side panel holds the document settings, Insert, Pictures and the Outline. The button at the top right of the work area opens it as a
+column right of the preview, which gets narrower, and closes it again; it is closed when the
+editor opens. On a phone it is the view **Edit**.
 
 ## Templates with placeholders
 
@@ -102,7 +101,8 @@ with its size and where the code uses it ("used 2×" jumps there), and lists the
 code asks for but that are missing ("Add file…" stores one under that name). From there you
 can insert a picture, insert it as a figure, rename it (the `\includegraphics` references
 follow), replace, download or remove it. You can also drag a picture on the pages to move it
-in the code.
+in the code. A click on a picture there shows an X at its top right corner: the X, or **Delete**,
+takes the picture out of the code in one Undo step, and its file stays in the **Pictures** tab.
 
 ## Export
 

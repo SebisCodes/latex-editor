@@ -3,6 +3,7 @@
  * it lands (picture-drop.js); on release its code moves (picture-code.js) as one undo step. A
  * click without moving still leads to the code; Escape cancels. With a finger the drag starts
  * after a long press on the picture, so a swipe that starts on a picture still scrolls the pages.
+ * A click selects the picture; its X or the Delete key removes its code (picture-remove.js).
  *
  * A move runs these steps:
  *   1. a press on a picture is remembered (with a finger, a timer starts the drag);
@@ -11,11 +12,15 @@
  *   4. the release writes the moved code and selects it in the code.
  */
 
-import { state, ui, showToast, getNumberInRange } from './state.js?v=2';
-import { setCode, addTypingStep } from './history.js?v=8';
-import { showCodePosition } from './code-view.js?v=8';
-import { PICTURES, findPictureCode, findGraphicCode, isAloneInCell, getMovedCode, getBesideCode } from './picture-code.js?v=2';
-import { getDropTarget } from './picture-drop.js?v=2';
+import { state, ui, NARROW_SCREEN, showToast, getNumberInRange } from './state.js?v=2';
+import { setCode, addTypingStep } from './history.js?v=9';
+import { showCodePosition } from './code-view.js?v=9';
+import { showCodeElement } from './preview.js?v=9';
+import { showPane } from './layout.js?v=9';
+import { VIEWER } from './sync.js?v=25';
+import { PICTURES, findPictureCode, findGraphicCode, isAloneInCell, getMovedCode, getBesideCode, getRemovedCode } from './picture-code.js?v=3';
+import { getDropTarget } from './picture-drop.js?v=3';
+import { startPictureRemover } from './picture-remove.js?v=1';
 
 /** How long a finger rests on a picture before the drag starts, in milliseconds. */
 const LONG_PRESS = 400;
@@ -188,4 +193,58 @@ export function startPictureMoving() {
     window.addEventListener('keydown', stopMoveOnEscape, true);
     window.addEventListener('click', event => { if (suppressClick) { event.stopPropagation(); event.preventDefault(); } }, true);
     ui.pages.addEventListener('dragstart', event => { if (event.target.closest?.(PICTURES)) event.preventDefault(); });
+}
+
+/**
+ * Finds the picture of the pages that a clicked element belongs to.
+ * @param {Element} target - the clicked element.
+ * @returns {Element|null} the picture, null when the element is no picture of the pages.
+ */
+function findClickedPicture(target) {
+    const picture = target.closest(PICTURES);
+    return picture && ui.pages.contains(picture) ? picture : null;
+}
+
+/**
+ * Leads the code to a picture's place, with the focus kept on the pages.
+ * @param {Element} picture - the picture.
+ * @param {boolean} openCode - true to show the code on a narrow screen.
+ * @returns {void}
+ */
+function showPictureCode(picture, openCode) {
+    if (openCode) showPane('code');
+    showCodePosition(+picture.dataset.p, false);
+    showCodeElement(false, true);
+}
+
+/**
+ * Removes a picture's source from the code as one undo step, when the pages show the current code.
+ * @param {Element} picture - the picture.
+ * @returns {void}
+ */
+function removePicture(picture) {
+    if (state.renderedCode !== state.code) { showToast(CODE_CHANGED); return; }
+    const source = findPictureCode(picture);
+    if (!source) return;
+    const removed = getRemovedCode(state.code, source);
+    addTypingStep();
+    setCode(removed.code);
+    showCodePosition(removed.at, false);
+}
+
+/**
+ * Starts the selection of pictures on the pages with their X and the Delete key.
+ * @returns {void}
+ */
+export function startPictureRemoving() {
+    startPictureRemover({
+        layer: ui.scroller,
+        findPicture: findClickedPicture,
+        getPictureBox: picture => picture.getBoundingClientRect(),
+        showPictureCode,
+        removePicture,
+        getCode: () => state.code,
+        isNarrowScreen: () => NARROW_SCREEN.matches,
+        isEnabled: () => !VIEWER,
+    });
 }

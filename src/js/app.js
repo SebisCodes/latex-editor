@@ -20,7 +20,7 @@
  *   6. offer the test hook window.latexEditor.
  */
 
-import { createI18n } from './i18n.js?v=29';
+import { createI18n } from './i18n.js?v=30';
 import { createWrap } from './wrap.js?v=5';
 import { createAiStatus } from './aistatus.js?v=9';
 import { createSync, VIEWER } from './sync.js?v=25';
@@ -34,32 +34,32 @@ import { createMcp } from './mcp.js?v=6';
 import { formatLatex } from './latex-tidy.js?v=3';
 import { drawPageCanvas } from './page-export.js?v=7';
 import { state, ui, areas, PREFIX, getElement, showToast } from './state.js?v=2';
-import { getSettings, startStorageSync } from './storage.js?v=8';
-import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=8';
-import { setCode, addHistoryStep, undo, redo } from './history.js?v=8';
-import { renderPreview, startPreview, startFontsWatch, getExportPages } from './preview.js?v=8';
-import { setZoom, showPage, startZoom } from './zoom.js?v=8';
-import { startPageClicks, startTextEditing } from './text-edit.js?v=8';
-import { startPictureMoving } from './picture-move.js?v=8';
-import { startProblems } from './problems.js?v=8';
-import { startTyping } from './typing.js?v=8';
-import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=8';
-import { startPicturesTab } from './pictures-tab.js?v=8';
-import { startSettingsPanel } from './settings-panel.js?v=8';
-import { startOutline } from './outline.js?v=8';
-import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=8';
-import { showFilePicker, startFileImport } from './file-import.js?v=8';
-import { startKeyboard } from './keyboard.js?v=8';
-import { showSplit, startLayout, startDialogs } from './layout.js?v=8';
-import { startExportDialog } from './export-dialog.js?v=8';
-import { startTemplateControls, updateTemplateView } from './template-panel.js?v=4';
+import { getSettings, startStorageSync } from './storage.js?v=9';
+import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=9';
+import { setCode, addHistoryStep, undo, redo } from './history.js?v=9';
+import { renderPreview, startPreview, startFontsWatch, getExportPages } from './preview.js?v=9';
+import { setZoom, showPage, startZoom } from './zoom.js?v=9';
+import { startPageClicks, startTextEditing } from './text-edit.js?v=9';
+import { startPictureMoving, startPictureRemoving } from './picture-move.js?v=9';
+import { startProblems } from './problems.js?v=9';
+import { startTyping } from './typing.js?v=9';
+import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=9';
+import { startPicturesTab } from './pictures-tab.js?v=9';
+import { startSettingsPanel } from './settings-panel.js?v=9';
+import { startOutline } from './outline.js?v=9';
+import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=9';
+import { showFilePicker, startFileImport } from './file-import.js?v=9';
+import { startKeyboard } from './keyboard.js?v=9';
+import { showSplit, startLayout, startDialogs } from './layout.js?v=9';
+import { startExportDialog } from './export-dialog.js?v=9';
+import { startTemplateControls, updateTemplateView } from './template-panel.js?v=5';
 import { createTemplateExamples } from './template-examples.js?v=2';
-import { createPicturePdf, runPrint } from './export.js?v=8';
+import { createPicturePdf, runPrint } from './export.js?v=9';
 import { getPlainText } from './latex.js?v=18';
-import { receiveDocument, importExternalDocument } from './incoming.js?v=8';
+import { receiveDocument, importExternalDocument } from './incoming.js?v=9';
 import {
     getPromptState, getProblemList, getSectionList, getFileList, openFileByName, createFile, addLatex, updateText, showLine,
-} from './agent-api.js?v=8';
+} from './agent-api.js?v=9';
 
 /** The fonts of the pages, loaded before the first pages are laid out. */
 const PAGE_FONTS = ['400 16px "LM Roman"', '700 16px "LM Roman"', 'italic 400 16px "LM Roman"', '400 16px "LM Mono"', '400 16px "LM Sans"', '700 16px "LM Sans"'];
@@ -113,6 +113,7 @@ function connectAreas() {
     startPageClicks();
     startTextEditing();
     startPictureMoving();
+    startPictureRemoving();
     startZoom();
     startProblems();
     startCodeView();

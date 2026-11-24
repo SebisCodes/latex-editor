@@ -11,9 +11,9 @@
 import { escapeHtml } from './latex.js?v=18';
 import { highlight } from './latex-highlight.js?v=5';
 import { state, ui, areas, NARROW_SCREEN, LINE_HEIGHT, getProblems } from './state.js?v=2';
-import { updateHistoryButtons, addHistoryStep } from './history.js?v=8';
-import { startPreviewTimer, showCodeElement, RENDER_DELAY } from './preview.js?v=8';
-import { startSaveTimer } from './storage.js?v=8';
+import { updateHistoryButtons, addHistoryStep } from './history.js?v=9';
+import { startPreviewTimer, showCodeElement, RENDER_DELAY } from './preview.js?v=9';
+import { startSaveTimer } from './storage.js?v=9';
 
 /** Code longer than this is shown without highlighting. */
 const MAX_HIGHLIGHT_LENGTH = 600000;

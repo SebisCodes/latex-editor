@@ -16,8 +16,8 @@
  *      a run of filled text loses its source place and stays read-only on the pages.
  */
 
-import { convertTemplateTagsToLetters, getTemplateTags } from './template-tags.js?v=1';
-import { expandTemplate, getCodeOffsetByViewOffset, getCopiedCodeRange, findFillAt } from './template-expansion.js?v=1';
+import { convertTemplateTagsToLetters, getTemplateTags } from './template-tags.js?v=2';
+import { expandTemplate, getCodeOffsetByViewOffset, getCopiedCodeRange, findFillAt } from './template-expansion.js?v=2';
 
 /** The characters of text that LaTeX reads as commands, written as text. */
 const TEXT_ESCAPES = { '\\': '\\textbackslash{}', '{': '\\{', '}': '\\}', '$': '\\$', '&': '\\&', '#': '\\#', '^': '\\textasciicircum{}', '_': '\\_', '~': '\\textasciitilde{}', '%': '\\%' };

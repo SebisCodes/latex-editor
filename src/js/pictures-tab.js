@@ -5,17 +5,17 @@
  * rename (the references follow), replace (same name), download and remove.
  */
 
-import { escapeHtml } from './latex.js?v=17';
+import { escapeHtml } from './latex.js?v=18';
 import { assets, getDataUrlBytes } from './assets.js?v=6';
 import { saveFile } from './util.js?v=3';
 import { openConfirmation } from './dialogs.js?v=5';
 import { state, ui, areas, NARROW_SCREEN } from './state.js?v=2';
-import { renderPreview } from './preview.js?v=7';
-import { showCodePosition } from './code-view.js?v=7';
-import { addSnippet } from './code-insert.js?v=7';
-import { addPackage } from './preamble-edit.js?v=7';
-import { showPane } from './layout.js?v=7';
-import { getNameStem, getPictureReferences, isReferenceTo, renamePicture, addPicture, addGraphic } from './picture-files.js?v=7';
+import { renderPreview } from './preview.js?v=8';
+import { showCodePosition } from './code-view.js?v=8';
+import { addSnippet } from './code-insert.js?v=8';
+import { addPackage } from './preamble-edit.js?v=8';
+import { showPane } from './layout.js?v=8';
+import { getNameStem, getPictureReferences, isReferenceTo, renamePicture, addPicture, addGraphic } from './picture-files.js?v=8';
 
 const KILOBYTE = 1024;
 const MEGABYTE = 1024 * 1024;

@@ -9,7 +9,7 @@
 
 import { getModelColor, getColorValue } from './latex-units.js?v=3';
 import { createScanner, getPosition, findClosingBrace, splitTopLevel } from './latex-scan.js?v=3';
-import { findTemplateTagAt, hasOnlySectionTags } from './template-tags.js?v=1';
+import { findTemplateTagAt, hasOnlySectionTags } from './template-tags.js?v=2';
 
 /** Table environments with a width as first argument. */
 const WIDE_TABLES = new Set(['tabular*', 'tabularx', 'xltabular', 'tabulary']);

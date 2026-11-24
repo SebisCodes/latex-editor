@@ -8,12 +8,12 @@
  * cursor is framed while the code has the focus.
  */
 
-import { escapeHtml } from './latex.js?v=17';
+import { escapeHtml } from './latex.js?v=18';
 import { highlight } from './latex-highlight.js?v=5';
 import { state, ui, areas, NARROW_SCREEN, LINE_HEIGHT, getProblems } from './state.js?v=2';
-import { updateHistoryButtons, addHistoryStep } from './history.js?v=7';
-import { startPreviewTimer, showCodeElement, RENDER_DELAY } from './preview.js?v=7';
-import { startSaveTimer } from './storage.js?v=7';
+import { updateHistoryButtons, addHistoryStep } from './history.js?v=8';
+import { startPreviewTimer, showCodeElement, RENDER_DELAY } from './preview.js?v=8';
+import { startSaveTimer } from './storage.js?v=8';
 
 /** Code longer than this is shown without highlighting. */
 const MAX_HIGHLIGHT_LENGTH = 600000;

@@ -4,11 +4,11 @@
  * selected to copy it without leaving the place.
  */
 
-import { escapeHtml } from './latex.js?v=17';
+import { escapeHtml } from './latex.js?v=18';
 import { state, ui, NARROW_SCREEN, getProblems } from './state.js?v=2';
-import { getLineIndex, showCodePosition } from './code-view.js?v=7';
-import { showCodeElement } from './preview.js?v=7';
-import { showPane } from './layout.js?v=7';
+import { getLineIndex, showCodePosition } from './code-view.js?v=8';
+import { showCodeElement } from './preview.js?v=8';
+import { showPane } from './layout.js?v=8';
 
 /** The most problems listed. */
 const MAX_LISTED = 60;

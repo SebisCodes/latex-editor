@@ -5,7 +5,7 @@
  * changes.
  */
 
-import { PAPERS } from './latex.js?v=17';
+import { PAPERS } from './latex.js?v=18';
 
 const BEGIN_DOCUMENT = '\\begin{document}';
 /** A pattern that never matches: the line is always added. */

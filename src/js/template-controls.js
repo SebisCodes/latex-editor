@@ -13,7 +13,7 @@
  * Every editor with template placeholders uses this same file.
  */
 
-import { buildPlaceholderTags } from './template-examples.js?v=1';
+import { buildPlaceholderTags, buildDocumentPlaceholders } from './template-examples.js?v=2';
 
 /** The view that shows the template filled with the examples. */
 const EXAMPLE_VIEW = 'example';
@@ -115,6 +115,21 @@ export function createPlaceholderBox(box, editor) {
     return {
         render: next => { placeholders = next; renderPlaceholderList(list, header, next, editor.syntax); },
     };
+}
+
+/**
+ * Returns what the "Placeholders" box lists: the page's placeholders, else the tags of the
+ * document, with a key that changes only when the list does.
+ * @param {?import('./template-examples.js').TemplateExamples} examples - the page's examples, or null.
+ * @param {string} code - the document's code.
+ * @param {import('./template-tags.js').TemplateSyntax} syntax - the syntax.
+ * @returns {{placeholders: import('./template-examples.js').TemplatePlaceholder[], key: (object|string)}} the placeholders and
+ *     the key: the page's examples, or the kinds and names of the document's tags.
+ */
+export function getListedPlaceholders(examples, code, syntax) {
+    if (examples && examples.placeholders.length) return { placeholders: examples.placeholders, key: examples };
+    const placeholders = buildDocumentPlaceholders(code, syntax);
+    return { placeholders, key: placeholders.map(placeholder => placeholder.kind + ':' + placeholder.name).join('\n') };
 }
 
 /**

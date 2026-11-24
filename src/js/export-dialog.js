@@ -7,16 +7,16 @@
  * made of the code shows the template as written; PDF follows the view the preview shows.
  */
 
-import { getPlainText } from './latex.js?v=17';
-import { drawPageCanvas, getCanvasBlob, getStandaloneHtml } from './page-export.js?v=6';
+import { getPlainText } from './latex.js?v=18';
+import { drawPageCanvas, getCanvasBlob, getStandaloneHtml } from './page-export.js?v=7';
 import { createZip } from './zip.js?v=4';
 import { openDialog } from './dialogs.js?v=5';
 import { saveFile, getSafeName } from './util.js?v=3';
 import { state, ui, areas, getElement, showToast } from './state.js?v=2';
-import { renderPreview, getExportPages } from './preview.js?v=7';
-import { getPageSize, getCurrentPage } from './zoom.js?v=7';
-import { stopTextEdit } from './text-edit.js?v=7';
-import { getPagePictures, runPrint, createTexZip, createAllZip } from './export.js?v=7';
+import { renderPreview, getExportPages } from './preview.js?v=8';
+import { getPageSize, getCurrentPage } from './zoom.js?v=8';
+import { stopTextEdit } from './text-edit.js?v=8';
+import { getPagePictures, runPrint, createTexZip, createAllZip } from './export.js?v=8';
 
 /** The formats exported as page pictures. */
 const PICTURE_FORMATS = /^(png|jpeg|webp)$/;

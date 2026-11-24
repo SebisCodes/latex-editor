@@ -7,7 +7,7 @@
  * read, with the typedefs the reader shares; splitting it further would scatter one topic.
  */
 
-import { hasTemplatePlaceholder, buildTemplatePicture } from './template-tags.js?v=1';
+import { hasTemplatePlaceholder, buildTemplatePicture } from './template-tags.js?v=2';
 import { POINT_PX, MILLIMETER_PX, DEFAULT_TEXT_WIDTH_PT, PAPERS, SIZE_NAMES, SIZE_POINTS, TEXT_WIDTH_PT, getCssLength, getColorValue } from './latex-units.js?v=3';
 import { parseKeyValues } from './latex-scan.js?v=3';
 

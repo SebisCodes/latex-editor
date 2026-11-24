@@ -12,17 +12,17 @@
  *      element at the cursor.
  */
 
-import { render, escapeHtml } from './latex.js?v=17';
-import { renderDocument, getExportResult } from './preview-views.js?v=2';
-import { renderTemplateControls } from './template-panel.js?v=3';
-import { renderPages } from './viewer.js?v=15';
+import { render, escapeHtml } from './latex.js?v=18';
+import { renderDocument, getExportResult } from './preview-views.js?v=3';
+import { renderTemplateControls } from './template-panel.js?v=4';
+import { renderPages } from './viewer.js?v=16';
 import { state, ui, getElements } from './state.js?v=2';
-import { renderCode } from './code-view.js?v=7';
-import { showZoom, updatePageLabel } from './zoom.js?v=7';
-import { renderProblems } from './problems.js?v=7';
-import { renderPicturesTab } from './pictures-tab.js?v=7';
-import { renderOutline } from './outline.js?v=7';
-import { renderSettingsPanel } from './settings-panel.js?v=7';
+import { renderCode } from './code-view.js?v=8';
+import { showZoom, updatePageLabel } from './zoom.js?v=8';
+import { renderProblems } from './problems.js?v=8';
+import { renderPicturesTab } from './pictures-tab.js?v=8';
+import { renderOutline } from './outline.js?v=8';
+import { renderSettingsPanel } from './settings-panel.js?v=8';
 
 /** How long the pages wait after typing before they are rendered, in milliseconds. */
 export const RENDER_DELAY = 280;

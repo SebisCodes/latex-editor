@@ -7,9 +7,9 @@
  * This module knows the syntaxes, finds the tags, checks that the sections open and close in
  * order, colors the tags in an editor's highlighted code (or puts them back as written there),
  * escapes them for a format checker and escapes them for KaTeX math (as boxed names, or as their
- * text). Every editor uses this same file and passes the syntax it read from its address; the
- * format-specific parts (stand-ins, previews) stay in the editor. It works on strings only, so it
- * runs in Node as well.
+ * text); escapeKatexText() writes any text for KaTeX's \text. Every editor uses this same file
+ * and passes the syntax it read from its address; the format-specific parts (stand-ins, previews)
+ * stay in the editor. It works on strings only, so it runs in Node as well.
  */
 
 /** The characters a placeholder name may hold after its first character (a letter or _). */
@@ -90,18 +90,94 @@ export function getTemplateNameByAddress(search) {
 const PICTURE_LABEL_LENGTH = 60;
 /** A UTF-16 surrogate without its partner, which an address cannot encode. */
 const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
-/** A placeholder of either syntax, written raw or percent-encoded as an address writes it. */
-const PLACEHOLDER_IN_REFERENCE = /\{\{[^{}]*\}\}|<<[^<>]*>>|%7B%7B.*?%7D%7D|%3C%3C.*?%3E%3E/i;
+/** An HTML character reference: numeric with or without its ";", or a name with its ";", or one of the names HTML also reads without it. */
+const CHARACTER_REFERENCE = /&#[xX]([0-9a-fA-F]+);?|&#([0-9]+);?|&([A-Za-z][A-Za-z0-9]*);|&(lt|LT|gt|GT|amp|AMP|quot|QUOT)(?![A-Za-z0-9;])/g;
+/** The characters of the named references a reference may spell its delimiters or escapes with. */
+const NAMED_CHARACTERS = { lt: '<', gt: '>', lbrace: '{', lcub: '{', rbrace: '}', rcub: '}', percnt: '%', amp: '&', quot: '"', apos: "'", bsol: '\\', Tab: '\t', NewLine: '\n', num: '#', sol: '/' };
+/** A CSS escape: up to six hex digits with an optional white space after them, a line break, or any other character. */
+const CSS_ESCAPE = /\\([0-9a-fA-F]{1,6})[ \t\n\r\f]?|\\(\r\n|[\n\r\f])|\\([\s\S])/g;
+/** A run of percent-encoded bytes. */
+const PERCENT_RUN = /(?:%[0-9a-fA-F]{2})+/g;
+/** The characters an address parser drops or leaves out of a host: tab, line breaks and the default ignorable characters. */
+const DROPPED_IN_REFERENCE = /[\t\n\r]|\p{Default_Ignorable_Code_Point}/gu;
 
 /**
- * Tells whether a reference (a picture address, a link, a file name) holds a placeholder of
- * either syntax, raw or percent-encoded. A preview shows such a reference as a placeholder and
- * loads nothing for it, with or without a template syntax: the reference is part of the document.
+ * Tells whether a reference (a picture address, a link, a file name, a CSS address) holds a
+ * placeholder of either syntax. The reference is read as the browser's parsers can read it, in
+ * any mix: HTML character references, CSS escapes and percent-encoded bytes decoded, compatibility
+ * forms (full-width braces) read as their plain characters, and tabs, line breaks and ignorable
+ * characters taken out. A preview shows such a reference as a placeholder and loads nothing for
+ * it, with or without a template syntax: the reference is part of the document.
  * @param {string} reference - the reference as written or as a parser normalized it.
- * @returns {boolean} true when it holds {{…}} or <<…>>.
+ * @returns {boolean} true when it holds {{…}} or <<…>>: an opening pair with a closing pair after it.
  */
 export function hasTemplatePlaceholder(reference) {
-    return PLACEHOLDER_IN_REFERENCE.test(String(reference));
+    const read = readReferenceCharacters(String(reference));
+    return hasDelimitedPair(read, '{{', '}}') || hasDelimitedPair(read, '<<', '>>');
+}
+
+/**
+ * Reads a reference as its characters (the steps of hasTemplatePlaceholder).
+ * @param {string} reference - the reference.
+ * @returns {string} the reference read: references, escapes and bytes decoded, normalized, dropped characters out.
+ */
+function readReferenceCharacters(reference) {
+    const decoded = expandPercentRuns(expandCssEscapes(expandCharacterReferences(reference.replace(DROPPED_IN_REFERENCE, ''))));
+    return decoded.replace(DROPPED_IN_REFERENCE, '').normalize('NFKC').replace(DROPPED_IN_REFERENCE, '');
+}
+
+/**
+ * Expands the HTML character references of a text; a name outside NAMED_CHARACTERS stays as written.
+ * @param {string} text - the text.
+ * @returns {string} the text with its references as characters.
+ */
+function expandCharacterReferences(text) {
+    return text.replace(CHARACTER_REFERENCE, (whole, hex, decimal, name, bareName) => {
+        if (hex || decimal) return getCharacterByCode(parseInt(hex || decimal, hex ? 16 : 10));
+        const key = name || bareName.toLowerCase();
+        return Object.hasOwn(NAMED_CHARACTERS, key) ? NAMED_CHARACTERS[key] : whole;
+    });
+}
+
+/**
+ * Expands the CSS escapes of a text.
+ * @param {string} text - the text.
+ * @returns {string} the text with its escapes as characters, an escaped line break taken out.
+ */
+function expandCssEscapes(text) {
+    return text.replace(CSS_ESCAPE, (whole, hex, lineBreak, character) => (hex ? getCharacterByCode(parseInt(hex, 16)) : lineBreak ? '' : character));
+}
+
+/**
+ * Expands the percent-encoded bytes of a text as UTF-8; a run that is no UTF-8 keeps its ASCII bytes decoded.
+ * @param {string} text - the text.
+ * @returns {string} the text with its encoded bytes as characters.
+ */
+function expandPercentRuns(text) {
+    return text.replace(PERCENT_RUN, run => {
+        try { return decodeURIComponent(run); } catch (error) { return run.replace(/%([0-7][0-9a-fA-F])/g, (code, byte) => String.fromCharCode(parseInt(byte, 16))); }
+    });
+}
+
+/**
+ * Returns the character of a code point; a code point outside Unicode is the replacement character.
+ * @param {number} code - the code point.
+ * @returns {string} the character.
+ */
+function getCharacterByCode(code) {
+    return code > 0 && code <= 0x10FFFF && !(code >= 0xD800 && code <= 0xDFFF) ? String.fromCodePoint(code) : '�';
+}
+
+/**
+ * Tells whether a text holds an opening pair followed later by a closing pair, in one pass each.
+ * @param {string} text - the text.
+ * @param {string} opening - the opening pair, "{{" or "<<".
+ * @param {string} closing - the closing pair, "}}" or ">>".
+ * @returns {boolean} true when a closing pair follows the first opening pair.
+ */
+function hasDelimitedPair(text, opening, closing) {
+    const start = text.indexOf(opening);
+    return start >= 0 && text.indexOf(closing, start + opening.length) >= 0;
 }
 
 /**
@@ -485,6 +561,16 @@ export function escapeTemplateTagsForKatex(tex, syntax) {
 const KATEX_TEXT_CHARACTERS = { '\\': '\\textbackslash{}', '{': '\\{', '}': '\\}', '#': '\\#', '$': '\\$', '%': '\\%', '&': '\\&', '_': '\\_', '^': '\\textasciicircum{}', '~': '\\textasciitilde{}' };
 
 /**
+ * Escapes a text for KaTeX's \text: each character that \text reads as a command becomes the
+ * command that prints it.
+ * @param {string} text - the text.
+ * @returns {string} the text as KaTeX code for \text{…}.
+ */
+export function escapeKatexText(text) {
+    return text.replace(/[\\{}#$%&_^~]/g, character => KATEX_TEXT_CHARACTERS[character]);
+}
+
+/**
  * Escapes the tags of a math formula for KaTeX as text: every tag becomes its own text as
  * written in a group (so it can stand after ^ or _ like a value would), and the formula holds
  * plain math.
@@ -496,8 +582,7 @@ export function escapeTemplateTagsAsKatexText(tex, syntax) {
     if (!syntax) return tex;
     let result = '', last = 0;
     for (const tag of getTemplateTags(tex, syntax)) {
-        const text = tex.slice(tag.start, tag.end).replace(/[\\{}#$%&_^~]/g, character => KATEX_TEXT_CHARACTERS[character]);
-        result += tex.slice(last, tag.start) + `{\\text{${text}}}`;
+        result += tex.slice(last, tag.start) + `{\\text{${escapeKatexText(tex.slice(tag.start, tag.end))}}}`;
         last = tag.end;
     }
     return result + tex.slice(last);

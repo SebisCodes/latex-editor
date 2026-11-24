@@ -15,7 +15,7 @@
  * runs in Node as well.
  */
 
-import { getTemplateTags } from './template-tags.js?v=1';
+import { getTemplateTags } from './template-tags.js?v=2';
 import { checkExamplePicture, readPictureSizeInBrowser } from './template-pictures.js?v=1';
 
 /** The most placeholders of one message, and the most fields of one list. */

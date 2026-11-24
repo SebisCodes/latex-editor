@@ -6,12 +6,12 @@
  */
 
 import { state, ui, getElement } from './state.js?v=2';
-import { setCodeRange } from './code-insert.js?v=7';
-import { addHistoryStep } from './history.js?v=7';
-import { renderPreview } from './preview.js?v=7';
-import { startViewSwitch, showViewSwitch, showViewNote, createPlaceholderBox } from './template-controls.js?v=1';
-import { buildDocumentPlaceholders } from './template-examples.js?v=1';
-import { TEMPLATE_SYNTAX, getViewMode, setViewMode, isExampleViewFailed, getTemplateExamples } from './preview-views.js?v=2';
+import { setCodeRange } from './code-insert.js?v=8';
+import { addHistoryStep } from './history.js?v=8';
+import { renderPreview } from './preview.js?v=8';
+import { startViewSwitch, showViewSwitch, showViewNote, createPlaceholderBox } from './template-controls.js?v=2';
+import { buildDocumentPlaceholders } from './template-examples.js?v=2';
+import { TEMPLATE_SYNTAX, getViewMode, setViewMode, isExampleViewFailed, getTemplateExamples } from './preview-views.js?v=3';
 
 /** The box, once connected. */
 let placeholderBox = null;

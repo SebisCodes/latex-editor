@@ -26,10 +26,10 @@ import { escapeHtml, PAPERS, SIZE_NAMES, getCssLength } from './latex-units.js?v
 import { SYMBOLS, ACCENTS, SPACES, ESCAPED, FONT_COMMANDS, FONT_DECLARATIONS, SECTION_LEVELS, SECTION_ORDER, MATH_ENVIRONMENTS } from './latex-names.js?v=3';
 import { LETTER, createScanner, getPosition, findClosingBrace, findClosingBracket, findEnvironmentEnd, formatRoman } from './latex-scan.js?v=3';
 import { Flow } from './latex-flow.js?v=3';
-import { TexDocument } from './latex-document.js?v=4';
+import { TexDocument } from './latex-document.js?v=5';
 import { SKIPPED_COMMANDS } from './latex-skipped-commands.js?v=2';
-import { MATH_METHODS } from './latex-math.js?v=5';
-import { TABLE_METHODS } from './latex-tables.js?v=5';
+import { MATH_METHODS } from './latex-math.js?v=6';
+import { TABLE_METHODS } from './latex-tables.js?v=6';
 import { BLOCK_METHODS } from './latex-blocks.js?v=4';
 import { ALGORITHM_METHODS } from './latex-algorithms.js?v=3';
 import { ENVIRONMENTS, ENVIRONMENT_METHODS } from './latex-environments.js?v=4';
@@ -38,7 +38,7 @@ import { BOX_COMMANDS } from './latex-box-commands.js?v=4';
 import { PAGE_COMMANDS, PAGE_METHODS } from './latex-page-commands.js?v=4';
 import { DEFINITION_COMMANDS, DEFINITION_METHODS } from './latex-definitions.js?v=2';
 import { PREAMBLE_METHODS } from './latex-preamble.js?v=4';
-import { getTemplateSyntax, findTemplateTagAt, checkTemplateSections, hasTemplatePlaceholder } from './template-tags.js?v=1';
+import { getTemplateSyntax, findTemplateTagAt, checkTemplateSections, hasTemplatePlaceholder } from './template-tags.js?v=2';
 
 export { escapeHtml, PAPERS };
 

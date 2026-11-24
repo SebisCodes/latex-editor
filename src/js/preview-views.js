@@ -13,11 +13,11 @@
  * print and PDF follow the view shown.
  */
 
-import { render } from './latex.js?v=17';
+import { render } from './latex.js?v=18';
 import { state, areas } from './state.js?v=2';
-import { getTemplateSyntax, getTemplateNameByAddress } from './template-tags.js?v=1';
-import { buildViewTitle } from './template-controls.js?v=1';
-import { buildLatexView, convertRenderResult } from './latex-examples.js?v=1';
+import { getTemplateSyntax, getTemplateNameByAddress } from './template-tags.js?v=2';
+import { buildViewTitle } from './template-controls.js?v=2';
+import { buildLatexView, convertRenderResult } from './latex-examples.js?v=2';
 
 /** The template syntax of the placeholders the page asked for with ?template= in the address, or null. */
 export const TEMPLATE_NAME = getTemplateNameByAddress(location.search);

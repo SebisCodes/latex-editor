@@ -15,7 +15,7 @@
  * measuring, and splitting them into modules would scatter one layout over several files.
  */
 
-import { escapeHtml } from './latex.js?v=17';
+import { escapeHtml } from './latex.js?v=18';
 
 /** CSS pixels per TeX point. */
 const PX_PER_PT = 96 / 72.27;

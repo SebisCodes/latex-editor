@@ -6,10 +6,10 @@
 
 import { openDialog } from './dialogs.js?v=5';
 import { state, ui, getElement, getElements, getNumberInRange } from './state.js?v=2';
-import { saveState } from './storage.js?v=7';
-import { moveCodeLayers } from './code-view.js?v=7';
-import { showZoom } from './zoom.js?v=7';
-import { renderPicturesTab } from './pictures-tab.js?v=7';
+import { saveState } from './storage.js?v=8';
+import { moveCodeLayers } from './code-view.js?v=8';
+import { showZoom } from './zoom.js?v=8';
+import { renderPicturesTab } from './pictures-tab.js?v=8';
 
 /** The smallest and largest share of the width the code takes. */
 const MIN_SPLIT = 0.15;

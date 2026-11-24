@@ -6,7 +6,8 @@
  *   1. find the tags and build the tree of sections, closed as the section check reads them (an
  *      end tag closes the inner sections with it; a stray end tag and a tag with an unknown sign
  *      add nothing); a line that holds only section tags and spaces is left out with its line
- *      break, as Mustache does;
+ *      break, as Mustache does (an editor may name further characters such a line holds, as the
+ *      pipes of a Markdown table row);
  *   2. walk the tree: text of the code is copied, a value tag becomes its example (or its label
  *      in brackets) written by the editor for its place, a section is shown by its example state
  *      (an inverted section the opposite), a list repeats its body once per example row;
@@ -17,11 +18,13 @@
  * that only exists after sections were left out (a backslash or "<" right before the fill) counts.
  * The work is bounded: the filled text, the segments, the steps and the depth of sections have
  * limits; past one, expandTemplate() throws a TemplateExpansionError.
+ * buildTagTextView() makes the template view for an editor that compiles text: every tag as the
+ * text the editor writes for it, with the same kind of map.
  * Every editor with template placeholders uses this same file; it works on strings only, so it
  * runs in Node as well.
  */
 
-import { getTemplateTags } from './template-tags.js?v=1';
+import { getTemplateTags } from './template-tags.js?v=2';
 
 /** The most characters the filled text may hold beyond the code's own length. */
 const EXTRA_CHARACTERS = 2e6;
@@ -35,6 +38,8 @@ const TAIL_LENGTH = 64;
 const MAX_DEPTH = 32;
 /** The kinds of tags that open a section. */
 const OPENING_KINDS = new Set(['section', 'inverted']);
+/** What a line of section tags holds besides its tags to be left out, unless the editor names more: white space. */
+const SPACES_ONLY = /^\s*$/;
 
 /**
  * The error of an expansion that went past one of its limits.
@@ -96,16 +101,58 @@ export class TemplateExpansionError extends RangeError {
  * @param {object} options - the examples and how a filled value is written.
  * @param {?import('./template-examples.js').TemplateExamples} options.examples - the page's examples, or null.
  * @param {FillWriter} options.writeFill - writes a value tag's fill for the tag's place in the format (escaped for it).
+ * @param {RegExp} [options.controlLine] - what the text around the section tags of a line has to match for the line
+ *     to be left out with its line break; white space by default.
  * @returns {TemplateView} the filled text and its map.
  * @throws {TemplateExpansionError} when the text, the segments, the steps or the depth go past their limits.
  */
-export function expandTemplate(code, syntax, { examples, writeFill }) {
+export function expandTemplate(code, syntax, { examples, writeFill, controlLine = SPACES_ONLY }) {
     const tags = getTemplateTags(code, syntax);
-    const tree = buildSectionTree(code, tags, getTagCuts(code, tags));
-    const output = { code, parts: [], tail: '', length: 0, map: [], steps: 0, rows: 0, limit: code.length + EXTRA_CHARACTERS };
+    const tree = buildSectionTree(code, tags, getTagCuts(code, tags, controlLine));
+    const output = createOutput(code);
     const scopes = [{ byName: examples ? examples.byName : new Map(), row: null, fields: null, isLabelRow: false }];
     writeNodes(output, tree, scopes, { examples, writeFill }, 0, 0);
     return { text: output.parts.join(''), map: output.map };
+}
+
+/**
+ * Writes a tag as the text a format shows for it in the template view.
+ * @callback TagWriter
+ * @param {import('./template-tags.js').TemplateTag} tag - the tag in the code.
+ * @param {string} before - the last characters of the text before it (at most 64).
+ * @returns {string} the tag as the format's text.
+ */
+
+/**
+ * Builds the template view of a template for an editor that compiles text: the code with every
+ * tag, section tags included, as the text the editor writes for it (its own text, escaped for its
+ * place). The map leads copied text to the same character and a tag's text to its tag.
+ * @param {string} code - the template.
+ * @param {import('./template-tags.js').TemplateSyntax} syntax - the syntax.
+ * @param {object} options - how a tag is written.
+ * @param {TagWriter} options.writeTag - writes a tag for its place in the format.
+ * @returns {TemplateView} the text and its map.
+ * @throws {TemplateExpansionError} when the text or the segments go past their limits.
+ */
+export function buildTagTextView(code, syntax, { writeTag }) {
+    const output = createOutput(code);
+    let last = 0;
+    for (const tag of getTemplateTags(code, syntax)) {
+        addSegment(output, last, tag.start, null, 0);
+        addSegment(output, tag.start, tag.end, String(writeTag(tag, output.tail)), 0);
+        last = tag.end;
+    }
+    addSegment(output, last, code.length, null, 0);
+    return { text: output.parts.join(''), map: output.map };
+}
+
+/**
+ * Creates the output a view is written into.
+ * @param {string} code - the template.
+ * @returns {object} the output: code, parts, tail, length, map, steps, rows and limit.
+ */
+function createOutput(code) {
+    return { code, parts: [], tail: '', length: 0, map: [], steps: 0, rows: 0, limit: code.length + EXTRA_CHARACTERS };
 }
 
 /**
@@ -128,14 +175,15 @@ export function expandTemplate(code, syntax, { examples, writeFill }) {
 
 /**
  * Returns the stretch of the code each tag takes out of the filled text: the tag itself, or, for
- * the tags of a line that holds only section tags and spaces, the whole line with its line break
- * (the first tag takes the leading spaces, each next tag the spaces before it, the last one the
- * trailing spaces and the line break).
+ * the tags of a line that holds only section tags and the text of a control line, the whole line
+ * with its line break (the first tag takes the text before it, each next tag the text before it,
+ * the last one the text after it and the line break).
  * @param {string} code - the template.
  * @param {import('./template-tags.js').TemplateTag[]} tags - its tags.
+ * @param {RegExp} controlLine - what the text around the tags of a control line matches.
  * @returns {TagCut[]} the stretch of each tag, in the order of the tags.
  */
-function getTagCuts(code, tags) {
+function getTagCuts(code, tags, controlLine) {
     const cuts = tags.map(tag => ({ start: tag.start, end: tag.end }));
     let index = 0;
     while (index < tags.length) {
@@ -145,7 +193,7 @@ function getTagCuts(code, tags) {
         let last = index;
         while (last + 1 < tags.length && tags[last + 1].end <= lineEnd) last++;
         const lineTags = tags.slice(index, last + 1);
-        if (lineTags.every(tag => tag.kind !== 'value') && isOnlyTags(code, lineStart, lineEnd, lineTags)) {
+        if (lineTags.every(tag => tag.kind !== 'value') && isControlLine(code, lineStart, lineEnd, lineTags, controlLine)) {
             for (let tagIndex = index; tagIndex <= last; tagIndex++) {
                 cuts[tagIndex].start = tagIndex === index ? lineStart : tags[tagIndex - 1].end;
                 cuts[tagIndex].end = tagIndex === last ? (breakAt < 0 ? lineEnd : lineEnd + 1) : tags[tagIndex].end;
@@ -157,20 +205,21 @@ function getTagCuts(code, tags) {
 }
 
 /**
- * Tells whether a line holds nothing but tags and spaces.
+ * Tells whether a line holds nothing but tags and the text of a control line.
  * @param {string} code - the template.
  * @param {number} lineStart - where the line starts.
  * @param {number} lineEnd - where it ends (before its line break).
  * @param {import('./template-tags.js').TemplateTag[]} lineTags - the tags on the line, in order.
- * @returns {boolean} true when only spaces and tabs stand between and around the tags.
+ * @param {RegExp} controlLine - what the text between and around the tags has to match.
+ * @returns {boolean} true when the text between and around the tags matches.
  */
-function isOnlyTags(code, lineStart, lineEnd, lineTags) {
-    let last = lineStart;
+function isControlLine(code, lineStart, lineEnd, lineTags, controlLine) {
+    let rest = '', last = lineStart;
     for (const tag of lineTags) {
-        if (code.slice(last, tag.start).trim()) return false;
+        rest += code.slice(last, tag.start);
         last = tag.end;
     }
-    return !code.slice(last, lineEnd).trim();
+    return controlLine.test(rest + code.slice(last, lineEnd));
 }
 
 /**

@@ -5,7 +5,7 @@
 
 import { escapeHtml } from './latex-units.js?v=3';
 import { getPosition, splitTopLevel } from './latex-scan.js?v=3';
-import { escapeTemplateTagsAsKatexText } from './template-tags.js?v=1';
+import { escapeTemplateTagsAsKatexText } from './template-tags.js?v=2';
 
 /** The renderer methods of this part, mixed into Renderer (latex.js). */
 export const MATH_METHODS = {

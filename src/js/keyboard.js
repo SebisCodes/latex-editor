@@ -7,11 +7,11 @@
 
 import { openDialog } from './dialogs.js?v=5';
 import { state, ui, areas, getElement } from './state.js?v=2';
-import { undo, redo } from './history.js?v=7';
-import { setZoom, getCurrentPage, showPage, ZOOM_STEP } from './zoom.js?v=7';
-import { saveQuickly, openExportDialog } from './export-dialog.js?v=7';
-import { runPrint } from './export.js?v=7';
-import { setNewMenuOpen, isNewMenuOpen } from './documents.js?v=7';
+import { undo, redo } from './history.js?v=8';
+import { setZoom, getCurrentPage, showPage, ZOOM_STEP } from './zoom.js?v=8';
+import { saveQuickly, openExportDialog } from './export-dialog.js?v=8';
+import { runPrint } from './export.js?v=8';
+import { setNewMenuOpen, isNewMenuOpen } from './documents.js?v=8';
 
 /** Fields the user types into: shortcuts without Ctrl pause there, and pasting goes into them. */
 export const TYPING_FIELDS = 'textarea, select, [contenteditable], input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=button])';

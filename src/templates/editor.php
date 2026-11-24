@@ -28,7 +28,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="/img/logo.svg">
-<link rel="stylesheet" href="/css/style.css?v=40">
+<link rel="stylesheet" href="/css/style.css?v=41">
 <link rel="stylesheet" href="/css/page.css?v=9">
 <link rel="stylesheet" href="/vendor/katex/katex.min.css?v=0.16.22">
 <script src="/js/lang-menu.js?v=1" defer></script>

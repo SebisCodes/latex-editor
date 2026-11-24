@@ -6,9 +6,9 @@
 
 import { escapeHtml } from './latex.js?v=17';
 import { state, ui, NARROW_SCREEN } from './state.js?v=2';
-import { showCodePosition } from './code-view.js?v=6';
-import { updatePageLabel } from './zoom.js?v=6';
-import { showPane } from './layout.js?v=6';
+import { showCodePosition } from './code-view.js?v=7';
+import { updatePageLabel } from './zoom.js?v=7';
+import { showPane } from './layout.js?v=7';
 
 /** Pixels above a heading when the pages scroll to it. */
 const HEADING_TOP_MARGIN = 20;

@@ -8,12 +8,12 @@
 import { store } from './files.js?v=11';
 import { assets, getFreeName, readAsDataUrl } from './assets.js?v=6';
 import { state, areas, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=6';
-import { renderPreview } from './preview.js?v=6';
-import { addSnippet } from './code-insert.js?v=6';
-import { addPackage } from './preamble-edit.js?v=6';
-import { renderInsertPanel } from './insert-panel.js?v=6';
-import { renderPicturesTab } from './pictures-tab.js?v=6';
+import { setCode } from './history.js?v=7';
+import { renderPreview } from './preview.js?v=7';
+import { addSnippet } from './code-insert.js?v=7';
+import { addPackage } from './preamble-edit.js?v=7';
+import { renderInsertPanel } from './insert-panel.js?v=7';
+import { renderPicturesTab } from './pictures-tab.js?v=7';
 
 /** The largest picture a document keeps, in bytes. */
 const MAX_PICTURE_SIZE = 12 * 1024 * 1024;

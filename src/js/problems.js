@@ -6,9 +6,9 @@
 
 import { escapeHtml } from './latex.js?v=17';
 import { state, ui, NARROW_SCREEN, getProblems } from './state.js?v=2';
-import { getLineIndex, showCodePosition } from './code-view.js?v=6';
-import { showCodeElement } from './preview.js?v=6';
-import { showPane } from './layout.js?v=6';
+import { getLineIndex, showCodePosition } from './code-view.js?v=7';
+import { showCodeElement } from './preview.js?v=7';
+import { showPane } from './layout.js?v=7';
 
 /** The most problems listed. */
 const MAX_LISTED = 60;

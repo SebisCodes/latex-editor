@@ -14,15 +14,15 @@
 
 import { render, escapeHtml } from './latex.js?v=17';
 import { renderDocument, getExportResult } from './preview-views.js?v=2';
-import { renderTemplateControls } from './template-panel.js?v=2';
+import { renderTemplateControls } from './template-panel.js?v=3';
 import { renderPages } from './viewer.js?v=15';
 import { state, ui, getElements } from './state.js?v=2';
-import { renderCode } from './code-view.js?v=6';
-import { showZoom, updatePageLabel } from './zoom.js?v=6';
-import { renderProblems } from './problems.js?v=6';
-import { renderPicturesTab } from './pictures-tab.js?v=6';
-import { renderOutline } from './outline.js?v=6';
-import { renderSettingsPanel } from './settings-panel.js?v=6';
+import { renderCode } from './code-view.js?v=7';
+import { showZoom, updatePageLabel } from './zoom.js?v=7';
+import { renderProblems } from './problems.js?v=7';
+import { renderPicturesTab } from './pictures-tab.js?v=7';
+import { renderOutline } from './outline.js?v=7';
+import { renderSettingsPanel } from './settings-panel.js?v=7';
 
 /** How long the pages wait after typing before they are rendered, in milliseconds. */
 export const RENDER_DELAY = 280;

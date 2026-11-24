@@ -86,8 +86,9 @@
  * `template` of "load"; { type: "<P>:template", clear: true } (or template: null) ends it. The
  * editor checks it (ed.parseTemplate) and keeps it in memory for the host document only: a
  * message replaces the one before, an older check that finishes late is dropped, a load's
- * template comes in together with its document, and a load without the field keeps the
- * template. The editor shows it while the host document is open (getTemplate()); when the
+ * template comes in together with its document, a load waits for the check of a message that
+ * came before it (so the document shows with it from the first paint), and a load without the
+ * field keeps the template. The editor shows it while the host document is open (getTemplate()); when the
  * opener is gone or the editor closes, it ends.
  *
  * PDF: the page may send { type: "<P>:pdf", dpi } (72 to 300, default 200) and
@@ -261,6 +262,7 @@ import { ANSWER_NONE } from './prompt-parts.js?v=1';
  * @property {number} loadGeneration - counts the page's loads: an older one that finishes later is dropped.
  * @property {PageTemplate|null} template - the page's template placeholders, or null.
  * @property {number} templateRevision - counts the page's template messages and loads with a template: an older check that finishes later is dropped.
+ * @property {Promise<void>} templateCheck - settles when the check of the page's last template message is taken; a load waits for it.
  * @property {boolean} closingSent - true once "closing" went to the opener.
  * @property {HTMLDialogElement} dialog - the "Save to server" dialog.
  * @property {HTMLButtonElement} saveButton - the Save button.
@@ -801,7 +803,7 @@ function createSyncSession(ed) {
         base: null, reported: '',
         hideSave: params.get('save') === '0',
         tidyAll: params.get('tidy') === '1',
-        waitingJobs: new Map(), pdfBusy: false, loadGeneration: 0, template: null, templateRevision: 0, closingSent: false,
+        waitingJobs: new Map(), pdfBusy: false, loadGeneration: 0, template: null, templateRevision: 0, templateCheck: Promise.resolve(), closingSent: false,
         dialog: document.getElementById('sync'),
         saveButton: document.getElementById('btn-save'),
         fields: null,
@@ -1647,7 +1649,7 @@ function showAiDocumentResult(sync, previousId, label) {
  */
 function importHostDocument(sync, load) {
     const { message, generation, name, pictures, fromAi, template } = load;
-    Promise.all([getLoadContent(sync, message.content, message), template ? template.examples : null])
+    Promise.all([getLoadContent(sync, message.content, message), template ? template.examples : null, sync.templateCheck])
         .then(([content, examples]) => {
             if (generation !== sync.loadGeneration) { examples?.close(); return false; }
             if (template) setTemplateIfCurrent(sync, template.revision, examples, null);
@@ -1691,7 +1693,7 @@ function receiveTemplate(sync, message) {
     if (!isPeerThere(sync)) return;
     const revision = ++sync.templateRevision;
     if (message.clear === true) { setTemplate(sync, null); return; }
-    checkPageTemplate(sync, message).then(examples => setTemplateIfCurrent(sync, revision, examples, null));
+    sync.templateCheck = checkPageTemplate(sync, message).then(examples => setTemplateIfCurrent(sync, revision, examples, null));
 }
 
 /**

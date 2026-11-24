@@ -6,9 +6,9 @@
  */
 
 import { state, ui, getElement } from './state.js?v=2';
-import { setCodeRange } from './code-insert.js?v=6';
-import { addHistoryStep } from './history.js?v=6';
-import { renderPreview } from './preview.js?v=6';
+import { setCodeRange } from './code-insert.js?v=7';
+import { addHistoryStep } from './history.js?v=7';
+import { renderPreview } from './preview.js?v=7';
 import { startViewSwitch, showViewSwitch, showViewNote, createPlaceholderBox } from './template-controls.js?v=1';
 import { buildDocumentPlaceholders } from './template-examples.js?v=1';
 import { TEMPLATE_SYNTAX, getViewMode, setViewMode, isExampleViewFailed, getTemplateExamples } from './preview-views.js?v=2';
@@ -17,6 +17,8 @@ import { TEMPLATE_SYNTAX, getViewMode, setViewMode, isExampleViewFailed, getTemp
 let placeholderBox = null;
 /** What the box lists: the examples it was drawn for, or the document's tags. */
 let listedKey = null;
+/** The page's template placeholders the preview and the controls were last drawn with. */
+let shownExamples = null;
 
 /**
  * Connects the switch of the views and the box; without a template syntax nothing.
@@ -37,13 +39,24 @@ export function startTemplateControls() {
  * @returns {void}
  */
 export function renderTemplateControls() {
+    const examples = getTemplateExamples();
+    shownExamples = examples;
     if (!placeholderBox) return;
     showViewSwitch(getElement('#view-switch'), getViewMode());
     showViewNote(getElement('#view-note'), isExampleViewFailed());
-    const examples = getTemplateExamples();
     const placeholders = examples && examples.placeholders.length ? examples.placeholders : buildDocumentPlaceholders(state.code, TEMPLATE_SYNTAX);
     const key = examples && examples.placeholders.length ? examples : placeholders.map(placeholder => placeholder.kind + ':' + placeholder.name).join('\n');
     if (key === listedKey) return;
     listedKey = key;
     placeholderBox.render(placeholders);
+}
+
+/**
+ * Draws the preview and its controls at once when the page's template placeholders differ from
+ * the ones they show: a template that comes with a document (or before it) shows from the first
+ * paint, in the preview and in the box.
+ * @returns {void}
+ */
+export function updateTemplateView() {
+    if (getTemplateExamples() !== shownExamples) renderPreview();
 }

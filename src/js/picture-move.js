@@ -12,8 +12,8 @@
  */
 
 import { state, ui, showToast, getNumberInRange } from './state.js?v=2';
-import { setCode, addTypingStep } from './history.js?v=6';
-import { showCodePosition } from './code-view.js?v=6';
+import { setCode, addTypingStep } from './history.js?v=7';
+import { showCodePosition } from './code-view.js?v=7';
 import { PICTURES, findPictureCode, findGraphicCode, isAloneInCell, getMovedCode, getBesideCode } from './picture-code.js?v=2';
 import { getDropTarget } from './picture-drop.js?v=2';
 

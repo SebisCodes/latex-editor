@@ -20,10 +20,10 @@
  *   6. offer the test hook window.latexEditor.
  */
 
-import { createI18n } from './i18n.js?v=27';
+import { createI18n } from './i18n.js?v=28';
 import { createWrap } from './wrap.js?v=5';
 import { createAiStatus } from './aistatus.js?v=9';
-import { createSync, VIEWER } from './sync.js?v=24';
+import { createSync, VIEWER } from './sync.js?v=25';
 import './export-menu.js?v=6';
 import { startConvert } from './convert-to.js?v=14';
 import { START } from './samples.js?v=3';
@@ -34,32 +34,32 @@ import { createMcp } from './mcp.js?v=6';
 import { formatLatex } from './latex-tidy.js?v=3';
 import { drawPageCanvas } from './page-export.js?v=6';
 import { state, ui, areas, PREFIX, getElement, showToast } from './state.js?v=2';
-import { getSettings, startStorageSync } from './storage.js?v=6';
-import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=6';
-import { setCode, addHistoryStep, undo, redo } from './history.js?v=6';
-import { renderPreview, startPreview, startFontsWatch, getExportPages, startPreviewTimer } from './preview.js?v=6';
-import { setZoom, showPage, startZoom } from './zoom.js?v=6';
-import { startPageClicks, startTextEditing } from './text-edit.js?v=6';
-import { startPictureMoving } from './picture-move.js?v=6';
-import { startProblems } from './problems.js?v=6';
-import { startTyping } from './typing.js?v=6';
-import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=6';
-import { startPicturesTab } from './pictures-tab.js?v=6';
-import { startSettingsPanel } from './settings-panel.js?v=6';
-import { startOutline } from './outline.js?v=6';
-import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=6';
-import { showFilePicker, startFileImport } from './file-import.js?v=6';
-import { startKeyboard } from './keyboard.js?v=6';
-import { showSplit, startLayout, startDialogs } from './layout.js?v=6';
-import { startExportDialog } from './export-dialog.js?v=6';
-import { startTemplateControls } from './template-panel.js?v=2';
+import { getSettings, startStorageSync } from './storage.js?v=7';
+import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=7';
+import { setCode, addHistoryStep, undo, redo } from './history.js?v=7';
+import { renderPreview, startPreview, startFontsWatch, getExportPages } from './preview.js?v=7';
+import { setZoom, showPage, startZoom } from './zoom.js?v=7';
+import { startPageClicks, startTextEditing } from './text-edit.js?v=7';
+import { startPictureMoving } from './picture-move.js?v=7';
+import { startProblems } from './problems.js?v=7';
+import { startTyping } from './typing.js?v=7';
+import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=7';
+import { startPicturesTab } from './pictures-tab.js?v=7';
+import { startSettingsPanel } from './settings-panel.js?v=7';
+import { startOutline } from './outline.js?v=7';
+import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=7';
+import { showFilePicker, startFileImport } from './file-import.js?v=7';
+import { startKeyboard } from './keyboard.js?v=7';
+import { showSplit, startLayout, startDialogs } from './layout.js?v=7';
+import { startExportDialog } from './export-dialog.js?v=7';
+import { startTemplateControls, updateTemplateView } from './template-panel.js?v=3';
 import { createTemplateExamples } from './template-examples.js?v=1';
-import { createPicturePdf, runPrint } from './export.js?v=6';
+import { createPicturePdf, runPrint } from './export.js?v=7';
 import { getPlainText } from './latex.js?v=17';
-import { receiveDocument, importExternalDocument } from './incoming.js?v=6';
+import { receiveDocument, importExternalDocument } from './incoming.js?v=7';
 import {
     getPromptState, getProblemList, getSectionList, getFileList, openFileByName, createFile, addLatex, updateText, showLine,
-} from './agent-api.js?v=6';
+} from './agent-api.js?v=7';
 
 /** The fonts of the pages, loaded before the first pages are laid out. */
 const PAGE_FONTS = ['400 16px "LM Roman"', '700 16px "LM Roman"', 'italic 400 16px "LM Roman"', '400 16px "LM Mono"', '400 16px "LM Sans"', '700 16px "LM Sans"'];
@@ -283,7 +283,7 @@ function createSyncEditor() {
         onAi: () => areas.ai?.updateRemote(),
         pdf: createPicturePdf,
         parseTemplate: message => createTemplateExamples(message),
-        onTemplate: () => startPreviewTimer(),
+        onTemplate: () => updateTemplateView(),
     };
 }
 

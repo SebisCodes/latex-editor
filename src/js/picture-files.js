@@ -5,15 +5,15 @@
  * when another document was opened meanwhile.
  */
 
-import { store } from './files.js?v=11';
-import { assets, getFreeName, readAsDataUrl } from './assets.js?v=6';
+import { store } from './files.js?v=12';
+import { assets, getFreeName, readAsDataUrl } from './assets.js?v=7';
 import { state, areas, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=9';
-import { renderPreview } from './preview.js?v=9';
-import { addSnippet } from './code-insert.js?v=9';
-import { addPackage } from './preamble-edit.js?v=9';
-import { renderInsertPanel } from './insert-panel.js?v=9';
-import { renderPicturesTab } from './pictures-tab.js?v=9';
+import { setCode } from './history.js?v=10';
+import { renderPreview } from './preview.js?v=10';
+import { addSnippet } from './code-insert.js?v=10';
+import { addPackage } from './preamble-edit.js?v=10';
+import { renderInsertPanel } from './insert-panel.js?v=10';
+import { renderPicturesTab } from './pictures-tab.js?v=10';
 
 /** The largest picture a document keeps, in bytes. */
 const MAX_PICTURE_SIZE = 12 * 1024 * 1024;

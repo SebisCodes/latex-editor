@@ -5,12 +5,12 @@
  * Each document keeps its own history while the page is open (documents.js).
  */
 
-import { assets } from './assets.js?v=6';
+import { assets } from './assets.js?v=7';
 import { state, ui, areas, getElement, showToast } from './state.js?v=2';
-import { renderCode } from './code-view.js?v=9';
-import { renderPreview } from './preview.js?v=9';
-import { saveState } from './storage.js?v=9';
-import { renderPicturesTab } from './pictures-tab.js?v=9';
+import { renderCode } from './code-view.js?v=10';
+import { renderPreview } from './preview.js?v=10';
+import { saveState } from './storage.js?v=10';
+import { renderPicturesTab } from './pictures-tab.js?v=10';
 
 /** The most undo steps kept per document. */
 const MAX_HISTORY = 300;

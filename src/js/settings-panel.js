@@ -11,7 +11,7 @@ import {
     PACKAGE_LINES, getDocumentStart, setPreambleLine, hasPackage, getGeometryOptions, setGeometry, getClassInfo, setClass,
     getPaper, setPaper, getFont, setFont, getPreambleValue, setPreambleValue,
 } from './preamble.js?v=7';
-import { setCodeKeepingCursor } from './preamble-edit.js?v=9';
+import { setCodeKeepingCursor } from './preamble-edit.js?v=10';
 
 const PAPER_CHOICES = [
     ['a4paper', 'A4 (210 × 297 mm)'], ['a5paper', 'A5 (148 × 210 mm)'], ['letterpaper', 'US Letter'], ['legalpaper', 'US Legal'],

@@ -7,14 +7,14 @@
  * open one; a pasted picture becomes a picture of the document.
  */
 
-import { readAsDataUrl } from './assets.js?v=6';
+import { readAsDataUrl } from './assets.js?v=7';
 import { state, ui, DEFAULT_NAME, getElement, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=9';
-import { renderPreview } from './preview.js?v=9';
-import { openNewDocument } from './documents.js?v=9';
-import { addPicture } from './picture-files.js?v=9';
-import { renderInsertPanel } from './insert-panel.js?v=9';
-import { TYPING_FIELDS } from './keyboard.js?v=9';
+import { setCode } from './history.js?v=10';
+import { renderPreview } from './preview.js?v=10';
+import { openNewDocument } from './documents.js?v=10';
+import { addPicture } from './picture-files.js?v=10';
+import { renderInsertPanel } from './insert-panel.js?v=10';
+import { TYPING_FIELDS } from './keyboard.js?v=10';
 import { readZipEntries, readEntryData } from './zip-read.js?v=2';
 
 const MEGABYTE = 1024 * 1024;

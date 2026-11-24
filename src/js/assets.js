@@ -100,8 +100,8 @@ export const assets = {
     async get(id) {
         if (memory.has(id) || isMemoryOnly(id)) return memory.get(id) || {};
         const pictures = (await runTransaction('readonly', objectStore => objectStore.get(id))) || {};
-        memory.set(id, pictures);
-        return pictures;
+        if (!memory.has(id)) memory.set(id, pictures);             // a write while reading holds the newer set
+        return memory.get(id);
     },
 
     /**
@@ -153,10 +153,21 @@ export const assets = {
      * @returns {Promise<Object<string, string>>} all pictures of the document.
      */
     async add(id, name, dataUrl) {
-        const pictures = { ...(await this.get(id)) };
-        pictures[name] = dataUrl;
-        await this.set(id, pictures);
-        return pictures;
+        return this.merge(id, { [name]: dataUrl });
+    },
+
+    /**
+     * Adds or replaces several pictures of a document in one write. The set written is the one this
+     * page holds at the moment of writing, so writes that overlap keep each other's pictures. A
+     * command that returns the set as it is once the write is done, as the caller shows it.
+     * @param {string} id - the document's id.
+     * @param {Object<string, string>} added - name -> data URI.
+     * @returns {Promise<Object<string, string>>} all pictures of the document.
+     */
+    async merge(id, added) {
+        await this.get(id);
+        await this.set(id, { ...this.getCached(id), ...added });
+        return this.getCached(id);
     },
 
     /**
@@ -167,10 +178,11 @@ export const assets = {
      * @returns {Promise<Object<string, string>>} the pictures left.
      */
     async remove(id, name) {
-        const pictures = { ...(await this.get(id)) };
+        await this.get(id);
+        const pictures = { ...this.getCached(id) };
         delete pictures[name];
         await this.set(id, pictures);
-        return pictures;
+        return this.getCached(id);
     },
 
     /**

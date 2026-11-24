@@ -6,9 +6,9 @@
  */
 
 import { state, ui } from './state.js?v=2';
-import { undo, redo } from './history.js?v=9';
-import { showCodeElement } from './preview.js?v=9';
-import { setCodeRange, addCommandAroundSelection } from './code-insert.js?v=9';
+import { undo, redo } from './history.js?v=10';
+import { showCodeElement } from './preview.js?v=10';
+import { setCodeRange, addCommandAroundSelection } from './code-insert.js?v=10';
 
 /** The indent one Tab adds. */
 const INDENT = '  ';

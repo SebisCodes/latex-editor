@@ -13,11 +13,11 @@
  */
 
 import { state, ui, NARROW_SCREEN, showToast, getNumberInRange } from './state.js?v=2';
-import { setCode, addTypingStep } from './history.js?v=9';
-import { showCodePosition } from './code-view.js?v=9';
-import { showCodeElement } from './preview.js?v=9';
-import { showPane } from './layout.js?v=9';
-import { VIEWER } from './sync.js?v=25';
+import { setCode, addTypingStep } from './history.js?v=10';
+import { showCodePosition } from './code-view.js?v=10';
+import { showCodeElement } from './preview.js?v=10';
+import { showPane } from './layout.js?v=10';
+import { VIEWER } from './sync.js?v=26';
 import { PICTURES, findPictureCode, findGraphicCode, isAloneInCell, getMovedCode, getBesideCode, getRemovedCode } from './picture-code.js?v=3';
 import { getDropTarget } from './picture-drop.js?v=3';
 import { startPictureRemover } from './picture-remove.js?v=1';

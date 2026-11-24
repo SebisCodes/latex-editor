@@ -6,9 +6,9 @@
  */
 
 import { state, ui, getElement } from './state.js?v=2';
-import { setCodeRange } from './code-insert.js?v=9';
-import { addHistoryStep } from './history.js?v=9';
-import { renderPreview } from './preview.js?v=9';
+import { setCodeRange } from './code-insert.js?v=10';
+import { addHistoryStep } from './history.js?v=10';
+import { renderPreview } from './preview.js?v=10';
 import { startViewSwitch, showViewSwitch, showViewNote, createPlaceholderBox } from './template-controls.js?v=2';
 import { buildDocumentPlaceholders } from './template-examples.js?v=2';
 import { TEMPLATE_SYNTAX, getViewMode, setViewMode, isExampleViewFailed, getTemplateExamples } from './preview-views.js?v=3';

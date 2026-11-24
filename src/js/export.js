@@ -11,11 +11,11 @@ import { getPlainText } from './latex.js?v=18';
 import { drawPageCanvas, getCanvasBlob, getStandaloneHtml, openPrintDialog } from './page-export.js?v=7';
 import { createJpegPdf } from './pdf.js?v=3';
 import { createZip } from './zip.js?v=4';
-import { getDataUrlBytes } from './assets.js?v=6';
+import { getDataUrlBytes } from './assets.js?v=7';
 import { state } from './state.js?v=2';
-import { renderPreview, getExportPages } from './preview.js?v=9';
+import { renderPreview, getExportPages } from './preview.js?v=10';
 import { getViewTitle } from './preview-views.js?v=3';
-import { getCurrentPage } from './zoom.js?v=9';
+import { getCurrentPage } from './zoom.js?v=10';
 
 /** The resolution of the PDF of page pictures, in dots per inch, when none is asked for. */
 const DEFAULT_PDF_DPI = 200;

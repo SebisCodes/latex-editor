@@ -12,14 +12,16 @@
  * replaced. A document a page hands over is kept in memory only, never stored.
  */
 
-import { store } from './files.js?v=11';
-import { assets } from './assets.js?v=6';
-import { VIEWER } from './sync.js?v=25';
+import { store } from './files.js?v=12';
+import { assets } from './assets.js?v=7';
+import { VIEWER } from './sync.js?v=26';
 import { state, ui, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=9';
-import { renderPreview } from './preview.js?v=9';
-import { openDocument, openNewDocument, createBlankDocument } from './documents.js?v=9';
-import { renderInsertPanel } from './insert-panel.js?v=9';
+import { setCode } from './history.js?v=10';
+import { renderPreview } from './preview.js?v=10';
+import { openDocument, openNewDocument, createBlankDocument } from './documents.js?v=10';
+import { renderInsertPanel } from './insert-panel.js?v=10';
+import { renderPicturesTab } from './pictures-tab.js?v=10';
+import { stopTextEdit } from './text-edit.js?v=10';
 
 const AI_DOCUMENT_NAME = 'AI document';
 const END_DOCUMENT = '\\end{document}';
@@ -125,4 +127,25 @@ function addExternalDocument(name, content, pictures, page, temp) {
     const id = openNewDocument(name, content, pictures, !!temp);
     if (id && page) try { store.setEntryFields(id, { page }); } catch (e) { /* storage full: it just is not recognized next time */ }
     if (id && pictures) { state.assets = pictures; renderInsertPanel(); renderPreview(); }
+}
+
+/**
+ * Adds files the page sends to its document (sync.js's addAssets): stored with that document,
+ * also while another one is open, its code as it is. While it is open, a text edit in the preview
+ * goes into the code first, then the pictures panel, the insert panel and the preview show them.
+ * @param {string} id - the id of the page's document.
+ * @param {Object<string, string>} files - the files by name, as data URIs.
+ * @returns {Promise<boolean>} true when the files are stored; false when the document is gone or is the user's own.
+ */
+export async function addPageAssets(id, files) {
+    const entry = store.getEntry(id);
+    if (!entry || !entry.page || !store.isInMemory(id)) return false;
+    const all = await assets.merge(id, files);
+    if (state.fileId !== id) return true;
+    stopTextEdit(true);
+    state.assets = all;
+    renderInsertPanel();
+    renderPicturesTab();
+    renderPreview();
+    return true;
 }

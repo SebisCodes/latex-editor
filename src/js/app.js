@@ -20,46 +20,46 @@
  *   6. offer the test hook window.latexEditor.
  */
 
-import { createI18n } from './i18n.js?v=30';
+import { createI18n } from './i18n.js?v=31';
 import { createWrap } from './wrap.js?v=5';
 import { createAiStatus } from './aistatus.js?v=9';
-import { createSync, VIEWER } from './sync.js?v=25';
+import { createSync, VIEWER } from './sync.js?v=26';
 import './export-menu.js?v=6';
 import { startConvert } from './convert-to.js?v=15';
 import { START } from './samples.js?v=3';
-import { store } from './files.js?v=11';
-import { assets } from './assets.js?v=6';
+import { store } from './files.js?v=12';
+import { assets } from './assets.js?v=7';
 import { createAi } from './ai.js?v=17';
 import { createMcp } from './mcp.js?v=6';
 import { formatLatex } from './latex-tidy.js?v=3';
 import { drawPageCanvas } from './page-export.js?v=7';
 import { state, ui, areas, PREFIX, getElement, showToast } from './state.js?v=2';
-import { getSettings, startStorageSync } from './storage.js?v=9';
-import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=9';
-import { setCode, addHistoryStep, undo, redo } from './history.js?v=9';
-import { renderPreview, startPreview, startFontsWatch, getExportPages } from './preview.js?v=9';
-import { setZoom, showPage, startZoom } from './zoom.js?v=9';
-import { startPageClicks, startTextEditing } from './text-edit.js?v=9';
-import { startPictureMoving, startPictureRemoving } from './picture-move.js?v=9';
-import { startProblems } from './problems.js?v=9';
-import { startTyping } from './typing.js?v=9';
-import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=9';
-import { startPicturesTab } from './pictures-tab.js?v=9';
-import { startSettingsPanel } from './settings-panel.js?v=9';
-import { startOutline } from './outline.js?v=9';
-import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=9';
-import { showFilePicker, startFileImport } from './file-import.js?v=9';
-import { startKeyboard } from './keyboard.js?v=9';
-import { showSplit, startLayout, startDialogs } from './layout.js?v=9';
-import { startExportDialog } from './export-dialog.js?v=9';
-import { startTemplateControls, updateTemplateView } from './template-panel.js?v=5';
+import { getSettings, startStorageSync } from './storage.js?v=10';
+import { renderCode, moveCodeLayers, showCodePosition, startCursorLine, startCodeView } from './code-view.js?v=10';
+import { setCode, addHistoryStep, undo, redo } from './history.js?v=10';
+import { renderPreview, startPreview, startFontsWatch, getExportPages } from './preview.js?v=10';
+import { setZoom, showPage, startZoom } from './zoom.js?v=10';
+import { startPageClicks, startTextEditing } from './text-edit.js?v=10';
+import { startPictureMoving, startPictureRemoving } from './picture-move.js?v=10';
+import { startProblems } from './problems.js?v=10';
+import { startTyping } from './typing.js?v=10';
+import { renderInsertPanel, startToolbarSnippets, startInsertPanel } from './insert-panel.js?v=10';
+import { startPicturesTab } from './pictures-tab.js?v=10';
+import { startSettingsPanel } from './settings-panel.js?v=10';
+import { startOutline } from './outline.js?v=10';
+import { showFileName, openDocument, createDocumentsDialog, startDocumentButtons } from './documents.js?v=10';
+import { showFilePicker, startFileImport } from './file-import.js?v=10';
+import { startKeyboard } from './keyboard.js?v=10';
+import { showSplit, startLayout, startDialogs } from './layout.js?v=10';
+import { startExportDialog } from './export-dialog.js?v=10';
+import { startTemplateControls, updateTemplateView } from './template-panel.js?v=6';
 import { createTemplateExamples } from './template-examples.js?v=2';
-import { createPicturePdf, runPrint } from './export.js?v=9';
+import { createPicturePdf, runPrint } from './export.js?v=10';
 import { getPlainText } from './latex.js?v=18';
-import { receiveDocument, importExternalDocument } from './incoming.js?v=9';
+import { receiveDocument, importExternalDocument, addPageAssets } from './incoming.js?v=10';
 import {
     getPromptState, getProblemList, getSectionList, getFileList, openFileByName, createFile, addLatex, updateText, showLine,
-} from './agent-api.js?v=9';
+} from './agent-api.js?v=10';
 
 /** The fonts of the pages, loaded before the first pages are laid out. */
 const PAGE_FONTS = ['400 16px "LM Roman"', '700 16px "LM Roman"', 'italic 400 16px "LM Roman"', '400 16px "LM Mono"', '400 16px "LM Sans"', '700 16px "LM Sans"'];
@@ -278,6 +278,7 @@ function createSyncEditor() {
         tidy: code => formatLatex(code),
         current: () => ({ id: state.fileId, name: state.name, content: state.code, assets: state.assets }),
         load: importExternalDocument,
+        addAssets: addPageAssets,
         toast: showToast,
         hookFor: id => store.getEntry(id)?.hook || null,
         setHookFor: (id, hook) => { try { store.setEntryFields(id, { hook }); } catch (e) { showToast('The browser storage is full'); } },

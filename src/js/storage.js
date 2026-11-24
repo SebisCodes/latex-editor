@@ -9,11 +9,11 @@
  *   - a hidden tab without edits of its own shows the version the other tab stored.
  */
 
-import { store } from './files.js?v=11';
-import { assets } from './assets.js?v=6';
+import { store } from './files.js?v=12';
+import { assets } from './assets.js?v=7';
 import { state, areas, showToast } from './state.js?v=2';
-import { setCode } from './history.js?v=9';
-import { showFileName } from './documents.js?v=9';
+import { setCode } from './history.js?v=10';
+import { showFileName } from './documents.js?v=10';
 
 const SETTINGS_KEY = 'latexeditor.v1';
 /** How long after typing the document is stored, in milliseconds. */

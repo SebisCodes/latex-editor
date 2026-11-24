@@ -95,13 +95,14 @@ Editor to page:
 |---|---|---|
 | `latexeditor:ready` | `version: 2, editor, window` | The editor can take a document. `window` is true in an own window. |
 | `latexeditor:loaded` | `id, name, target?` | After each load. Remember the `id`: later messages are about this document. `target: "new"` marks a new document from the AI, which is not yours. |
-| `latexeditor:change` | `id, name, content, assetsChanged, assetsRemoved` | A real edit of your document (not the load itself), also an Undo back to your version. Adding, replacing or removing one of its pictures counts. |
+| `latexeditor:change` | `id, name, content, assetsChanged, assetsRemoved` | A real edit of your document (not the load itself), also an Undo back to your version. Adding, replacing or removing one of its pictures counts; the files of your `latexeditor:assets` are your page's already. |
 | `latexeditor:save` | `editor, event, id, name, content, assets, assetsChanged, assetsRemoved, updated` | The user clicked Save or pressed Ctrl+S, or the answer to `get`. `assets` holds all pictures of your document as data URIs; `assetsChanged` and `assetsRemoved` name those that differ from what your page has. |
 | `latexeditor:closing` | `id, name, unsaved, content?` | (own window) The window closes. Always sent; `content` only when there are unsaved changes, `id` is null before the first load. |
 | `latexeditor:reload` | `id, unsaved` | F5 or Ctrl+R inside your page. The editor does not reload itself; ask the user and reload the frame if wanted. |
 | `latexeditor:key-request` | `reason: "missing"` | The editor has no AI key for this session yet (see "AI through your own server"). |
 | `latexeditor:ai-click` | `request, id, name` | The user pressed the AI button; only with `ai: { dialog: "page" }` (see "AI through your own server"). |
 | `latexeditor:pdf` | `id, name, pages, pdf` or `id, error` | The answer to your `latexeditor:pdf`: `pdf` is a data URI of a PDF with one JPEG picture per page (the text cannot be selected). |
+| `latexeditor:assets` | `id, added` or `id, error` | The answer to your `latexeditor:assets`: the names of the files added, or why none was added. |
 
 Page to editor:
 
@@ -113,6 +114,7 @@ Page to editor:
 | `latexeditor:ai` | `label?, prompt?, endpoint?, key?, base?, assets?, answer?, dialog?` or `clear: true`, or `decline: true, message?` | AI through your own server; `decline` answers `latexeditor:key-request`. |
 | `latexeditor:ai-click` | `request, handled` | The answer to `latexeditor:ai-click`: `handled: true` when your page shows its own AI dialog. |
 | `latexeditor:template` | `placeholders, assets?` or `clear: true` | With `?template=`: your placeholders with examples and example pictures (see "Template placeholders"). |
+| `latexeditor:assets` | `add` | Adds files to your document (see "Adding files to your document"). |
 | `latexeditor:pdf` | `dpi?` | Asks for your document as a PDF of page pictures (`dpi` 72 to 300, default 200). |
 
 Optional fields of `latexeditor:load`:
@@ -137,6 +139,36 @@ Your document is the one your page loaded (or opened with `src`). `change`, `sav
 browser, also when the user opens them in the editor. The AI settings and the hook from
 `load` apply only while your document is open. Your document is kept in memory only: it is
 never stored in the user's browser and is gone when the editor closes.
+
+### Adding files to your document
+
+When your server has a file for your document - for example a picture an AI uploaded through your
+own site - send it into the open editor:
+
+```js
+ed.contentWindow.postMessage({ type: 'latexeditor:assets',
+  add: { 'picture-1.png': 'data:image/png;base64,...' } }, ORIGIN);
+// answer: { type: 'latexeditor:assets', id, added: ['picture-1.png'] } or { type: 'latexeditor:assets', id, error }
+```
+
+- Each file joins your document or takes the place of its file of the same name; the other files
+  stay. To remove a file, send `latexeditor:load` with the whole set.
+- The text stays as it is. Your page holds the files already, so they count as part of what your
+  page has: `latexeditor:change` and the automatic save of a webhook stay quiet, Undo stays as it is, and
+  `assetsChanged` names only other files. `assets` of `latexeditor:save` and of the answer to `get` carries
+  them with the others.
+- The files show at once in the Pictures panel, in the insert picker and in the preview, also in the
+  viewer. While the user has another document open, they are stored with your document and show
+  when it is open again.
+- Taken: 1 to 20 files per message, base64 data URIs of PNG, JPEG, GIF, WebP or PDF under a plain
+  name (letters, digits, `.`, `-`, `_`, at most 100 characters, no folder) whose extension fits the
+  type (`.png`, `.jpg` or `.jpeg`, `.gif`, `.webp`, `.pdf`). At most 40 MB per message, 40 MB of
+  messages waiting, and 40 MB for your document with all its files. One file outside these rules
+  refuses the whole message: the document keeps its files and the answer carries `error`.
+- The files are for the document of your last `latexeditor:load`: they wait for that load and are stored in
+  the order you sent them, and a load you send after them waits for them. Before the first load the
+  answer is `{ id: null, error }`.
+- Check the type by the file's content on your server before you send a file.
 
 ### AI Assistant inside your page
 
